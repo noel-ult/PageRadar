@@ -17,7 +17,7 @@ import { HealthController } from './health.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ['../../.env', '.env'], validationSchema: Joi.object({ DATABASE_URL: Joi.string().pattern(/^postgres(ql)?:\/\/\S+$/).required(), DIRECT_URL: Joi.string().pattern(/^postgres(ql)?:\/\/\S+$/).optional(), JWT_SECRET: Joi.string().min(32).required(), JWT_EXPIRES_IN: Joi.string().default('7d'), PORT: Joi.number().port().default(3001) }) }),
-    GraphQLModule.forRootAsync<ApolloDriverConfig>({ driver: ApolloDriver, inject: [ConfigService], useFactory: (config: ConfigService) => ({ autoSchemaFile: join(process.cwd(), 'src/schema.gql'), sortSchema: true, path: '/graphql', playground: config.get('NODE_ENV') !== 'production', introspection: config.get('NODE_ENV') !== 'production' }) }),
+    GraphQLModule.forRootAsync<ApolloDriverConfig>({ driver: ApolloDriver, inject: [ConfigService], useFactory: (config: ConfigService) => ({ autoSchemaFile: config.get('NODE_ENV') === 'production' ? true : join(process.cwd(), 'src/schema.gql'), sortSchema: true, path: '/graphql', playground: config.get('NODE_ENV') !== 'production', introspection: true }) }),
     PrismaModule, AuthModule, UsersModule, WatchesModule, SnapshotsModule, ChangesModule, InterestsModule, NotificationsModule,
   ],
   controllers: [HealthController],
