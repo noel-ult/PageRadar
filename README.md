@@ -55,8 +55,8 @@ WEB_PORT=3000
 `DATABASE_URL` is the Supabase pooled connection string used by the API at
 runtime. `DIRECT_URL` is the direct Supabase PostgreSQL connection string used
 by Prisma migrations. Both remain server-side secrets. The public frontend
-talks to `/graphql`, which Next.js securely proxies to the internal `api`
-container.
+talks to `/graphql`, which a runtime Next.js route securely proxies to the
+internal `api` container.
 
 After deployment, verify these URLs before enabling the public domain:
 
