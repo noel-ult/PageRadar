@@ -26,7 +26,7 @@ export function WatchCard({ watch }: { watch: Watch }) {
             {watch.url}
           </a>
         </div>
-        <WatchStatusBadge status={watch.status} />
+        <WatchStatusBadge isActive={watch.isActive} />
       </div>
       <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
         <div>

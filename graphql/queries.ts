@@ -11,15 +11,7 @@ export const ME_QUERY = gql`
   }
 `;
 
-export const DASHBOARD_STATS_QUERY = gql`
-  query DashboardStats {
-    dashboardStats {
-      activeWatches
-      recentChanges
-      importantChanges
-    }
-  }
-`;
+export const DASHBOARD_STATS_QUERY = gql`query DashboardStats { watches { id } }`;
 
 export const WATCHES_QUERY = gql`
   query Watches {
@@ -34,9 +26,6 @@ export const WATCH_QUERY = gql`
   query Watch($id: ID!) {
     watch(id: $id) {
       ...WatchCardFields
-      changes {
-        ...ChangeSummaryFields
-      }
     }
   }
   ${WATCH_CARD_FRAGMENT}
@@ -44,14 +33,9 @@ export const WATCH_QUERY = gql`
 `;
 
 export const RECENT_CHANGES_QUERY = gql`
-  query RecentChanges($limit: Int) {
-    changes(limit: $limit) {
+  query RecentChanges {
+    changes {
       ...ChangeSummaryFields
-      watch {
-        id
-        name
-        url
-      }
     }
   }
   ${CHANGE_SUMMARY_FRAGMENT}
@@ -61,11 +45,6 @@ export const CHANGE_QUERY = gql`
   query Change($id: ID!) {
     change(id: $id) {
       ...ChangeSummaryFields
-      watch {
-        id
-        name
-        url
-      }
     }
   }
   ${CHANGE_SUMMARY_FRAGMENT}

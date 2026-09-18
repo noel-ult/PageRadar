@@ -37,10 +37,9 @@ export function WatchForm() {
       const { data } = await createWatch({
         variables: {
           input: {
-            name: name.trim(),
+            title: name.trim(),
             url: url.trim(),
-            checkIntervalMinutes: Number(interval),
-            interests,
+            checkInterval: Number(interval) * 60,
           },
         },
       });

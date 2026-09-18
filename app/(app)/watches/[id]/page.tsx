@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { WATCH_QUERY } from "@/graphql/queries";
 import {
-  CHECK_WATCH_NOW_MUTATION,
   DELETE_WATCH_MUTATION,
   PAUSE_WATCH_MUTATION,
   RESUME_WATCH_MUTATION,
@@ -36,13 +35,12 @@ export default function WatchDetailPage({
   const [pauseWatch, pauseS] = useMutation(PAUSE_WATCH_MUTATION);
   const [resumeWatch, resumeS] = useMutation(RESUME_WATCH_MUTATION);
   const [deleteWatch, deleteS] = useMutation(DELETE_WATCH_MUTATION);
-  const [checkNow, checkS] = useMutation(CHECK_WATCH_NOW_MUTATION);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const watch: Watch | undefined = (data as any)?.watch;
-  const busy = pauseS.loading || resumeS.loading || deleteS.loading || checkS.loading;
+  const busy = pauseS.loading || resumeS.loading || deleteS.loading;
 
   if (loading) return <LoadingState message="Loading watch..." />;
   if (error || !watch)
@@ -98,7 +96,7 @@ export default function WatchDetailPage({
               {watch.url}
             </a>
           </div>
-          <WatchStatusBadge status={watch.status} />
+          <WatchStatusBadge isActive={watch.isActive} />
         </div>
         <dl className="mt-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
           <div>
@@ -112,7 +110,7 @@ export default function WatchDetailPage({
           <div>
             <dt className="text-xs text-slate-500">Monitoring</dt>
             <dd className="font-medium">
-              {watch.interests.length > 0 ? watch.interests.join(", ") : "—"}
+              {watch.interests?.length ? watch.interests.join(", ") : "—"}
             </dd>
           </div>
         </dl>
@@ -122,15 +120,7 @@ export default function WatchDetailPage({
           </p>
         ) : null}
         <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void wrap(() => checkNow({ variables: { id } }))}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
-          >
-            {checkS.loading ? "Checking webpage..." : "Check Now"}
-          </button>
-          {watch.status === "ACTIVE" ? (
+          {watch.isActive ? (
             <button
               type="button"
               disabled={busy}

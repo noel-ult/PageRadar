@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useQuery } from "@apollo/client/react";
 import {
-  DASHBOARD_STATS_QUERY,
   WATCHES_QUERY,
   RECENT_CHANGES_QUERY,
 } from "@/graphql/queries";
@@ -14,32 +13,29 @@ import { ChangeCard } from "@/components/changes/ChangeCard";
 import { friendlyErrorMessage } from "@/lib/format";
 
 export default function DashboardPage() {
-  const stats = useQuery(DASHBOARD_STATS_QUERY);
   const watchesQ = useQuery(WATCHES_QUERY);
   const changesQ = useQuery(RECENT_CHANGES_QUERY, {
     variables: { limit: 10 },
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const s: DashboardStats | undefined = (stats.data as any)?.dashboardStats;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const watches: Watch[] = ((watchesQ.data as any)?.watches ?? []) as Watch[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const changes = (((changesQ.data as any)?.changes ?? []) as any[]).slice(0, 5);
 
-  const loading = stats.loading || watchesQ.loading || changesQ.loading;
-  const error = stats.error ?? watchesQ.error ?? changesQ.error;
+  const loading = watchesQ.loading || changesQ.loading;
+  const error = watchesQ.error ?? changesQ.error;
 
-  if (loading && !stats.data && !watchesQ.data && !changesQ.data) {
+  if (loading && !watchesQ.data && !changesQ.data) {
     return <LoadingState message="Loading dashboard..." />;
   }
 
-  if (error && !stats.data && !watchesQ.data && !changesQ.data) {
+  if (error && !watchesQ.data && !changesQ.data) {
     return (
       <ErrorState
         message={`Unable to load the dashboard. ${friendlyErrorMessage(error)}`}
         onRetry={() => {
-          void stats.refetch();
           void watchesQ.refetch();
           void changesQ.refetch();
         }}
@@ -48,7 +44,7 @@ export default function DashboardPage() {
   }
 
   const activeWatches =
-    s?.activeWatches ?? watches.filter((w) => w.status === "ACTIVE").length;
+    watches.filter((w) => w.isActive).length;
   const important = changes.filter((c) =>
     ["HIGH", "CRITICAL"].includes(c.importance)
   );
@@ -68,10 +64,10 @@ export default function DashboardPage() {
       <section aria-label="Summary" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {[
           { label: "Active Watches", value: activeWatches },
-          { label: "Recent Changes", value: s?.recentChanges ?? changes.length },
+          { label: "Recent Changes", value: changes.length },
           {
             label: "Important Changes",
-            value: s?.importantChanges ?? important.length,
+            value: important.length,
           },
         ].map((item) => (
           <div

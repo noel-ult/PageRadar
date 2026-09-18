@@ -1,7 +1,5 @@
-import type { WatchStatus } from "@/lib/types";
-
-export function WatchStatusBadge({ status }: { status: WatchStatus | string }) {
-  const active = status === "ACTIVE";
+export function WatchStatusBadge({ isActive }: { isActive: boolean }) {
+  const active = isActive;
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${

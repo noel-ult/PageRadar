@@ -3,10 +3,8 @@ import { WATCH_CARD_FRAGMENT } from "./fragments";
 
 export const LOGIN_MUTATION = gql`
   mutation Login($email: String!, $password: String!) {
-    login(email: $email, password: $password) {
+    login(input: { email: $email, password: $password }) {
       accessToken
-      access_token
-      token
       user {
         id
         name
@@ -18,10 +16,8 @@ export const LOGIN_MUTATION = gql`
 
 export const REGISTER_MUTATION = gql`
   mutation Register($name: String!, $email: String!, $password: String!) {
-    register(name: $name, email: $email, password: $password) {
-      id
-      name
-      email
+    register(input: { name: $name, email: $email, password: $password }) {
+      accessToken
     }
   }
 `;
@@ -37,18 +33,18 @@ export const CREATE_WATCH_MUTATION = gql`
 
 export const PAUSE_WATCH_MUTATION = gql`
   mutation PauseWatch($id: ID!) {
-    pauseWatch(id: $id) {
+    toggleWatch(id: $id, isActive: false) {
       id
-      status
+      isActive
     }
   }
 `;
 
 export const RESUME_WATCH_MUTATION = gql`
   mutation ResumeWatch($id: ID!) {
-    resumeWatch(id: $id) {
+    toggleWatch(id: $id, isActive: true) {
       id
-      status
+      isActive
     }
   }
 `;

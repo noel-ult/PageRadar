@@ -122,7 +122,7 @@ export default function WatchesPage() {
                     {formatDateTime(w.lastCheckedAt)}
                   </p>
                 </div>
-                <WatchStatusBadge status={w.status} />
+                <WatchStatusBadge isActive={w.isActive} />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
@@ -131,7 +131,7 @@ export default function WatchesPage() {
                 >
                   View
                 </Link>
-                {w.status === "ACTIVE" ? (
+                {w.isActive ? (
                   <button
                     type="button"
                     disabled={busy}

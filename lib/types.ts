@@ -1,7 +1,6 @@
 export const GRAPHQL_URL =
   process.env.NEXT_PUBLIC_GRAPHQL_URL || "/graphql";
 
-export type WatchStatus = "ACTIVE" | "PAUSED";
 
 export type ChangeType =
   | "DEADLINE_CHANGED"
@@ -38,9 +37,9 @@ export interface Watch {
   id: string;
   name: string;
   url: string;
-  status: WatchStatus;
+  isActive: boolean;
   checkIntervalMinutes: number;
-  interests: string[];
+  interests?: string[];
   lastCheckedAt?: string | null;
   createdAt?: string | null;
   latestChange?: ChangeSummary | null;
