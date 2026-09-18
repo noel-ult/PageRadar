@@ -22,6 +22,9 @@ services:
     env_file:
       - path: .env
         required: false
+    networks:
+      - default
+      - dokploy-network
 
   web:
     build:
@@ -39,8 +42,7 @@ services:
       - INTERNAL_API_URL=http://api:3001/graphql
       - NEXT_PUBLIC_GRAPHQL_URL=${NEXT_PUBLIC_GRAPHQL_URL:-/graphql}
     depends_on:
-      api:
-        condition: service_healthy
+      - api
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
       interval: 30s
@@ -50,3 +52,10 @@ services:
     env_file:
       - path: .env
         required: false
+    networks:
+      - default
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true
