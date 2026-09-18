@@ -48,6 +48,8 @@ JWT_EXPIRES_IN=7d
 NEXT_PUBLIC_GRAPHQL_URL=/graphql
 INTERNAL_API_URL=http://api:3001/graphql
 FRONTEND_URL=https://your-domain.example
+API_PORT=3001
+WEB_PORT=3000
 ```
 
 `DATABASE_URL` is the Supabase pooled connection string used by the API at
