@@ -11,7 +11,7 @@ export function WatchForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
-  const [interval, setInterval] = useState(60);
+  const [interval, setInterval] = useState<number | string>(15);
   const [interests, setInterests] = useState<string[]>(["DEADLINE", "STATUS"]);
   const [formError, setFormError] = useState<string | null>(null);
   const [createWatch, { loading }] = useMutation(CREATE_WATCH_MUTATION);
@@ -29,6 +29,11 @@ export function WatchForm() {
       setFormError("Please enter a valid URL, e.g. https://example.com/admissions.");
       return;
     }
+    const parsedInterval = Number(interval);
+    if (!parsedInterval || parsedInterval < 1) {
+      setFormError("Monitoring interval must be at least 1 minute.");
+      return;
+    }
     if (interests.length === 0) {
       setFormError("Select at least one type of information to monitor.");
       return;
@@ -39,7 +44,7 @@ export function WatchForm() {
           input: {
             title: name.trim(),
             url: url.trim(),
-            checkInterval: Number(interval) * 60,
+            checkInterval: parsedInterval,
           },
         },
       });
@@ -92,10 +97,12 @@ export function WatchForm() {
         <input
           id="watch-interval"
           type="number"
-          min={5}
-          max={1440}
+          min={1}
+          max={43200}
           value={interval}
-          onChange={(e) => setInterval(Number(e.target.value))}
+          onChange={(e) =>
+            setInterval(e.target.value === "" ? "" : Number(e.target.value))
+          }
           className="w-40 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
         />
       </div>
