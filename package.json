@@ -1,15 +1,1 @@
-{
-  "name": "pageradar",
-  "private": true,
-  "workspaces": ["apps/*"],
-  "scripts": {
-    "start:dev": "npm --workspace @pageradar/api run start:dev",
-    "build": "npm --workspace @pageradar/api run build",
-    "lint": "npm --workspace @pageradar/api run lint",
-    "typecheck": "npm --workspace @pageradar/api run typecheck",
-    "test": "npm --workspace @pageradar/api run test",
-    "prisma:generate": "npm --workspace @pageradar/api run prisma:generate",
-    "prisma:validate": "npm --workspace @pageradar/api run prisma:validate",
-    "prisma:db:check": "npm --workspace @pageradar/api run prisma:db:check"
-  }
-}
+{"name":"pageradar","version":"0.1.0","private":true,"workspaces":["apps/*"],"scripts":{"dev":"next dev","dev:api":"npm --workspace @pageradar/api run start:dev","build":"npm run build:web && npm run build:api","build:web":"next build","build:api":"npm --workspace @pageradar/api run build","start":"next start","start:api":"npm --workspace @pageradar/api run start","lint":"npm run lint:web && npm run lint:api","lint:web":"eslint","lint:api":"npm --workspace @pageradar/api run lint","typecheck":"npm run typecheck:web && npm run typecheck:api","typecheck:web":"tsc --noEmit","typecheck:api":"npm --workspace @pageradar/api run typecheck","test":"npm --workspace @pageradar/api run test","test:e2e":"playwright test","prisma:db:check":"npm --workspace @pageradar/api run prisma:db:check","prisma:migrate":"npx prisma migrate deploy --schema apps/api/prisma/schema.prisma"},"dependencies":{"@apollo/client":"^4.3.0","graphql":"^16.14.2","next":"16.3.5","react":"19.2.8","react-dom":"19.2.8"},"devDependencies":{"@playwright/test":"^1.63.0","@tailwindcss/postcss":"^4","@types/node":"^20","@types/react":"^19","@types/react-dom":"^19","eslint":"^9","eslint-config-next":"16.3.5","tailwindcss":"^4","typescript":"^5"}}
