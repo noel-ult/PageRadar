@@ -68,3 +68,7 @@ The final health endpoint returns HTTP 200 only when both the web service and
 the NestJS API can reach Supabase. A 503 indicates the API logs should be
 checked for missing environment variables, an unreachable Supabase host, or a
 failed Prisma migration.
+
+For Dokploy's single-container Dockerfile deployment, select `Dockerfile` and
+set the public container port to `3000`. The container starts both services;
+port `3001` is internal-only.

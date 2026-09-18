@@ -24,7 +24,7 @@ trap cleanup INT TERM
 if [ -n "$DATABASE_URL" ]; then
   echo "==> [Database] Running Prisma migrations..."
   if [ -f "apps/api/prisma/schema.prisma" ]; then
-    npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma || echo "[Warning] Migration deploy failed or database unreachable; continuing startup..."
+    apps/api/node_modules/.bin/prisma migrate deploy --schema=apps/api/prisma/schema.prisma || echo "[Warning] Migration deploy failed or database unreachable; continuing startup..."
   elif [ -f "prisma/schema.prisma" ]; then
     npx prisma migrate deploy --schema=prisma/schema.prisma || echo "[Warning] Migration deploy failed or database unreachable; continuing startup..."
   fi
