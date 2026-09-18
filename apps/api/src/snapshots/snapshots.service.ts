@@ -1,0 +1,2 @@
+import { Injectable } from '@nestjs/common'; import { PrismaService } from '../prisma/prisma.service';
+@Injectable() export class SnapshotsService { constructor(private readonly prisma: PrismaService) {} listForWatch(watchId: string, userId: string) { return this.prisma.snapshot.findMany({ where: { watchId, watch: { userId } }, select: { id: true, contentHash: true, capturedAt: true }, orderBy: { capturedAt: 'desc' } }); } }

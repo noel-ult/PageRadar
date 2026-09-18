@@ -1,0 +1,15 @@
+{
+  "name": "pageradar",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "start:dev": "npm --workspace @pageradar/api run start:dev",
+    "build": "npm --workspace @pageradar/api run build",
+    "lint": "npm --workspace @pageradar/api run lint",
+    "typecheck": "npm --workspace @pageradar/api run typecheck",
+    "test": "npm --workspace @pageradar/api run test",
+    "prisma:generate": "npm --workspace @pageradar/api run prisma:generate",
+    "prisma:validate": "npm --workspace @pageradar/api run prisma:validate",
+    "prisma:db:check": "npm --workspace @pageradar/api run prisma:db:check"
+  }
+}

@@ -1,0 +1,1 @@
+import { Module } from '@nestjs/common'; import { ChangesService } from './changes.service'; import { ChangesResolver } from './changes.resolver'; @Module({ providers: [ChangesService, ChangesResolver] }) export class ChangesModule {}

@@ -1,0 +1,3 @@
+import { Field, ID, Int, ObjectType, registerEnumType } from '@nestjs/graphql'; import { ChangeType } from '@prisma/client'; import { GraphQLISODateTime } from '@nestjs/graphql';
+registerEnumType(ChangeType, { name: 'ChangeType' });
+@ObjectType() export class ChangeModel { @Field(() => ID) id!: string; @Field(() => ID) watchId!: string; @Field(() => ChangeType) type!: ChangeType; @Field({ nullable: true }) oldValue!: string | null; @Field({ nullable: true }) newValue!: string | null; @Field({ nullable: true }) section!: string | null; @Field(() => Int) importance!: number; @Field({ nullable: true }) reason!: string | null; @Field(() => GraphQLISODateTime) detectedAt!: Date; }

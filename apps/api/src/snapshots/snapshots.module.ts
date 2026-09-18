@@ -1,0 +1,1 @@
+import { Module } from '@nestjs/common'; import { SnapshotsService } from './snapshots.service'; import { SnapshotsResolver } from './snapshots.resolver'; @Module({ providers: [SnapshotsService, SnapshotsResolver] }) export class SnapshotsModule {}

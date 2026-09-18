@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ChangeType {
+  DEADLINE_CHANGED
+  ELIGIBILITY_CHANGED
+  STATUS_CHANGED
+  REQUIREMENT_CHANGED
+  PRICE_CHANGED
+  LINK_CHANGED
+  SECTION_CHANGED
+  CONTENT_CHANGED
+}
+enum InterestType {
+  DEADLINE
+  ELIGIBILITY
+  STATUS
+  REQUIREMENT
+  PRICE
+  LINK
+}
+enum NotificationChannel {
+  EMAIL
+}
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+enum CheckRunStatus {
+  QUEUED
+  RUNNING
+  SUCCESS
+  NO_CHANGE
+  CHANGE_DETECTED
+  FAILED
+}
+
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  name String
+  email String @unique
+  passwordHash String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  watches Watch[]
+  interests UserInterest[]
+  notifications Notification[]
+}
+
+model Watch {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  url String
+  title String
+  checkInterval Int
+  isActive Boolean @default(true)
+  lastCheckedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  snapshots Snapshot[]
+  changes Change[]
+  checkRuns CheckRun[]
+  @@index([userId])
+  @@index([isActive])
+}
+
+model Snapshot {
+  id String @id @default(uuid()) @db.Uuid
+  watchId String @db.Uuid
+  content String
+  contentHash String
+  capturedAt DateTime @default(now())
+  watch Watch @relation(fields: [watchId], references: [id], onDelete: Cascade)
+  oldForChanges Change[] @relation("OldSnapshot")
+  newForChanges Change[] @relation("NewSnapshot")
+  @@index([watchId])
+  @@index([watchId, capturedAt])
+}
+
+model Change {
+  id String @id @default(uuid()) @db.Uuid
+  watchId String @db.Uuid
+  oldSnapshotId String? @db.Uuid
+  newSnapshotId String? @db.Uuid
+  type ChangeType
+  oldValue String?
+  newValue String?
+  section String?
+  importance Int @default(0)
+  reason String?
+  detectedAt DateTime @default(now())
+  watch Watch @relation(fields: [watchId], references: [id], onDelete: Cascade)
+  oldSnapshot Snapshot? @relation("OldSnapshot", fields: [oldSnapshotId], references: [id], onDelete: SetNull)
+  newSnapshot Snapshot? @relation("NewSnapshot", fields: [newSnapshotId], references: [id], onDelete: SetNull)
+  notifications Notification[]
+  @@index([watchId])
+  @@index([detectedAt])
+  @@index([watchId, detectedAt])
+}
+
+model UserInterest {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  type InterestType
+  enabled Boolean @default(true)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model Notification {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  changeId String? @db.Uuid
+  channel NotificationChannel @default(EMAIL)
+  status NotificationStatus @default(PENDING)
+  message String
+  sentAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  change Change? @relation(fields: [changeId], references: [id], onDelete: SetNull)
+  @@index([userId])
+}
+
+model CheckRun {
+  id String @id @default(uuid()) @db.Uuid
+  watchId String @db.Uuid
+  status CheckRunStatus @default(QUEUED)
+  startedAt DateTime @default(now())
+  completedAt DateTime?
+  error String?
+  watch Watch @relation(fields: [watchId], references: [id], onDelete: Cascade)
+  @@index([watchId])
+}
