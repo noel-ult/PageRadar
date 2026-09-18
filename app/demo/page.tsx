@@ -1,0 +1,42 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo, useState } from "react";
+
+type Priority = "High" | "Medium" | "Low";
+
+const watches = [
+  { name: "National scholarship programme", url: "education.gov.example/scholarships", interval: "Every 6 hours", state: "Watching", changes: 2, color: "bg-violet-500" },
+  { name: "Atlas Pro pricing", url: "atlas.example/pricing", interval: "Every 12 hours", state: "Watching", changes: 1, color: "bg-sky-500" },
+  { name: "Open grant calls", url: "funding.example/open-calls", interval: "Daily", state: "Paused", changes: 0, color: "bg-amber-500" },
+];
+
+const changes = [
+  { id: "deadline", site: "National scholarship programme", type: "Deadline changed", priority: "High" as Priority, before: "Applications close 12 January 2027", after: "Applications close 19 January 2027", time: "8 minutes ago", note: "The application deadline moved forward by seven days." },
+  { id: "price", site: "Atlas Pro pricing", type: "Price changed", priority: "Medium" as Priority, before: "$49 per editor / month", after: "$39 per editor / month", time: "2 hours ago", note: "The annual plan promotional price has been updated." },
+  { id: "eligibility", site: "National scholarship programme", type: "Eligibility changed", priority: "High" as Priority, before: "Open to final-year students", after: "Open to all undergraduate students", time: "Yesterday", note: "The eligibility section now includes first through third-year students." },
+];
+
+const priorityStyle: Record<Priority, string> = { High: "bg-rose-100 text-rose-700", Medium: "bg-amber-100 text-amber-700", Low: "bg-slate-100 text-slate-600" };
+
+export default function DemoPage() {
+  const [filter, setFilter] = useState<"All" | Priority>("All");
+  const [selected, setSelected] = useState(changes[0].id);
+  const visibleChanges = useMemo(() => filter === "All" ? changes : changes.filter((change) => change.priority === filter), [filter]);
+  const focused = changes.find((change) => change.id === selected) ?? changes[0];
+
+  return (
+    <main className="min-h-screen bg-[#f5f8fc] text-slate-900">
+      <header className="border-b border-slate-200 bg-white"><div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5"><Link href="/" className="flex items-center gap-2 text-lg font-black tracking-tight"><span className="grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-sm text-teal-300">P</span>PageRadar <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-800">Demo</span></Link><Link href="/register" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-700">Start monitoring</Link></div></header>
+      <div className="mx-auto grid max-w-7xl gap-6 px-5 py-8 lg:grid-cols-[220px_1fr]">
+        <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"><p className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-[.14em] text-slate-400">Workspace</p><a className="mb-1 flex rounded-lg bg-slate-900 px-3 py-2 text-sm font-bold text-white">Overview</a><a className="flex rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Watches <span className="ml-auto text-slate-400">3</span></a><a className="flex rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Changes <span className="ml-auto text-slate-400">3</span></a><div className="mt-6 rounded-xl bg-teal-50 p-3"><p className="text-xs font-bold text-teal-800">Demo workspace</p><p className="mt-1 text-xs leading-5 text-teal-700">This screen uses safe sample data. Connect your account to watch real pages.</p></div></aside>
+        <section className="min-w-0"><div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-semibold text-teal-700">Thursday, 18 September</p><h1 className="mt-1 text-3xl font-black tracking-tight">Your change radar</h1><p className="mt-2 text-slate-500">A focused view of what changed across your monitored pages.</p></div><button className="rounded-xl bg-teal-500 px-4 py-2.5 text-sm font-bold text-slate-950 shadow-sm shadow-teal-500/30 hover:bg-teal-400">+ Add a watch</button></div>
+          <div className="grid gap-4 sm:grid-cols-3">{[["3", "Active watches", "All systems checking"], ["3", "Changes found", "In the last 24 hours"], ["2", "Need attention", "High-priority updates"]].map(([value, label, detail], index) => <article key={label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className={`h-1.5 w-10 rounded-full ${index === 2 ? "bg-rose-400" : "bg-teal-400"}`} /><p className="mt-5 text-3xl font-black">{value}</p><p className="mt-1 text-sm font-bold text-slate-700">{label}</p><p className="mt-1 text-xs text-slate-400">{detail}</p></article>)}</div>
+          <div className="mt-7 grid gap-6 xl:grid-cols-[1.05fr_.95fr]"><section><div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-black">Monitored pages</h2><button className="text-sm font-bold text-teal-700">View all</button></div><div className="space-y-3">{watches.map((watch) => <article key={watch.name} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${watch.color} text-sm font-black text-white`}>{watch.name.charAt(0)}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{watch.name}</p><p className="truncate text-xs text-slate-400">{watch.url}</p><p className="mt-2 text-xs text-slate-500">{watch.interval}</p></div><div className="text-right"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ${watch.state === "Watching" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{watch.state}</span><p className="mt-2 text-xs text-slate-400">{watch.changes ? `${watch.changes} updates` : "No updates"}</p></div></article>)}</div></section>
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p className="text-xs font-bold uppercase tracking-[.14em] text-slate-400">Selected change</p><div className="mt-2 flex items-center justify-between gap-3"><div><h2 className="font-black">{focused.type}</h2><p className="mt-1 text-sm text-slate-500">{focused.site}</p></div><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${priorityStyle[focused.priority]}`}>{focused.priority}</span></div><p className="mt-5 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-600">{focused.note}</p><div className="mt-4 grid gap-3"><div className="rounded-xl border border-rose-100 bg-rose-50 p-3"><p className="text-xs font-bold uppercase tracking-wider text-rose-500">Before</p><p className="mt-1 text-sm font-semibold text-slate-700">{focused.before}</p></div><div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3"><p className="text-xs font-bold uppercase tracking-wider text-emerald-600">After</p><p className="mt-1 text-sm font-semibold text-slate-700">{focused.after}</p></div></div></section></div>
+          <section className="mt-7"><div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-black">Detected changes</h2><div className="flex gap-1 rounded-xl bg-slate-200/70 p-1">{(["All", "High", "Medium", "Low"] as const).map((option) => <button key={option} onClick={() => setFilter(option)} className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${filter === option ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>{option}</button>)}</div></div><div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">{visibleChanges.map((change) => <button key={change.id} onClick={() => setSelected(change.id)} className={`flex w-full items-center gap-4 border-b border-slate-100 p-4 text-left last:border-0 hover:bg-slate-50 ${change.id === selected ? "bg-teal-50/50" : ""}`}><span className="grid h-9 w-9 place-items-center rounded-lg bg-slate-100 text-slate-500">↗</span><span className="min-w-0 flex-1"><span className="block text-sm font-bold">{change.type}</span><span className="block truncate text-xs text-slate-400">{change.site} · {change.time}</span></span><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${priorityStyle[change.priority]}`}>{change.priority}</span></button>)}</div></section>
+        </section>
+      </div>
+    </main>
+  );
+}
