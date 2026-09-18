@@ -5,22 +5,20 @@ FROM node:20-alpine AS base
 WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl curl
 
-# --- Dependencies ---
-FROM base AS deps
+# --- Builder ---
+FROM base AS builder
 COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/
 RUN npm ci
 
-# --- Builder ---
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 ARG NEXT_PUBLIC_GRAPHQL_URL=/graphql
 ENV NEXT_PUBLIC_GRAPHQL_URL=${NEXT_PUBLIC_GRAPHQL_URL}
 
 # Generate Prisma client and compile API and Web
-RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
+RUN npm --prefix apps/api run prisma:generate
 RUN npm run build:api
 RUN npm run build:web
 

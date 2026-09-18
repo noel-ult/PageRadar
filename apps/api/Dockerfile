@@ -3,20 +3,18 @@
 # --- Base ---
 FROM node:20-alpine AS base
 WORKDIR /app
-RUN apk add --no-cache libc6-compat openssl
-
-# --- Dependencies ---
-FROM base AS deps
-COPY package.json package-lock.json ./
-COPY prisma ./prisma
-RUN npm ci
-RUN npx prisma generate
+RUN apk add --no-cache libc6-compat openssl curl
 
 # --- Builder ---
 FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
+COPY package.json package-lock.json ./
+COPY prisma ./prisma
+RUN npm ci
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+RUN npm run prisma:generate
+
 COPY . .
-RUN npx prisma generate
+RUN npm run prisma:generate
 RUN npm run build
 
 # --- Runner ---
@@ -37,5 +35,8 @@ COPY --from=builder --chown=nestjs:nodejs /app/package.json ./package.json
 USER nestjs
 
 EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -f http://localhost:3001/health || exit 1
 
 CMD ["node", "dist/src/main.js"]
