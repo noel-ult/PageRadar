@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
 
 export const CHANGE_SUMMARY_FRAGMENT = gql`
-  fragment ChangeSummaryFields on Change {
+  fragment ChangeSummaryFields on ChangeModel {
     id
     changeType: type
     importance
@@ -16,7 +16,7 @@ export const CHANGE_SUMMARY_FRAGMENT = gql`
 `;
 
 export const WATCH_CARD_FRAGMENT = gql`
-  fragment WatchCardFields on Watch {
+  fragment WatchCardFields on WatchModel {
     id
     name: title
     url
@@ -25,5 +25,4 @@ export const WATCH_CARD_FRAGMENT = gql`
     lastCheckedAt
     createdAt
   }
-  ${CHANGE_SUMMARY_FRAGMENT}
 `;

@@ -29,7 +29,6 @@ export const WATCH_QUERY = gql`
     }
   }
   ${WATCH_CARD_FRAGMENT}
-  ${CHANGE_SUMMARY_FRAGMENT}
 `;
 
 export const RECENT_CHANGES_QUERY = gql`
