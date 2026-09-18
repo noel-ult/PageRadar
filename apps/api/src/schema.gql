@@ -1,0 +1,152 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AuthPayload {
+  accessToken: String!
+  user: UserModel!
+}
+
+input ChangeFilterInput {
+  from: String
+  importance: Int
+  to: String
+  type: ChangeType
+  watchId: ID
+}
+
+type ChangeModel {
+  detectedAt: DateTime!
+  id: ID!
+  importance: Int!
+  newValue: String
+  oldValue: String
+  reason: String
+  section: String
+  type: ChangeType!
+  watchId: ID!
+}
+
+enum ChangeType {
+  CONTENT_CHANGED
+  DEADLINE_CHANGED
+  ELIGIBILITY_CHANGED
+  LINK_CHANGED
+  PRICE_CHANGED
+  REQUIREMENT_CHANGED
+  SECTION_CHANGED
+  STATUS_CHANGED
+}
+
+input CreateWatchInput {
+  checkInterval: Int!
+  title: String!
+  url: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+input InterestInput {
+  enabled: Boolean!
+  type: InterestType!
+}
+
+enum InterestType {
+  DEADLINE
+  ELIGIBILITY
+  LINK
+  PRICE
+  REQUIREMENT
+  STATUS
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type Mutation {
+  createWatch(input: CreateWatchInput!): WatchModel!
+  deleteWatch(id: ID!): Boolean!
+  login(input: LoginInput!): AuthPayload!
+  register(input: RegisterInput!): AuthPayload!
+  toggleWatch(id: ID!, isActive: Boolean!): WatchModel!
+  updateInterests(inputs: [InterestInput!]!): [UserInterestModel!]!
+  updateWatch(id: ID!, input: UpdateWatchInput!): WatchModel!
+}
+
+enum NotificationChannel {
+  EMAIL
+}
+
+type NotificationModel {
+  changeId: ID
+  channel: NotificationChannel!
+  createdAt: DateTime!
+  id: ID!
+  message: String!
+  sentAt: DateTime
+  status: NotificationStatus!
+}
+
+enum NotificationStatus {
+  FAILED
+  PENDING
+  SENT
+}
+
+type Query {
+  change(id: ID!): ChangeModel
+  changes(filter: ChangeFilterInput): [ChangeModel!]!
+  me: UserModel!
+  notifications: [NotificationModel!]!
+  snapshots(watchId: ID!): [SnapshotModel!]!
+  userInterests: [UserInterestModel!]!
+  watch(id: ID!): WatchModel
+  watches: [WatchModel!]!
+}
+
+input RegisterInput {
+  email: String!
+  name: String!
+  password: String!
+}
+
+type SnapshotModel {
+  capturedAt: DateTime!
+  contentHash: String!
+  id: ID!
+}
+
+input UpdateWatchInput {
+  checkInterval: Int
+  title: String
+  url: String
+}
+
+type UserInterestModel {
+  enabled: Boolean!
+  id: ID!
+  type: InterestType!
+}
+
+type UserModel {
+  createdAt: DateTime!
+  email: String!
+  id: ID!
+  name: String!
+}
+
+type WatchModel {
+  checkInterval: Int!
+  createdAt: DateTime!
+  id: ID!
+  isActive: Boolean!
+  lastCheckedAt: DateTime
+  title: String!
+  updatedAt: DateTime!
+  url: String!
+}
