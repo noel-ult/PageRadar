@@ -22,8 +22,13 @@ export function formatChangeType(value?: string | null): string {
     .join(" ");
 }
 
-export function formatImportance(value?: string | null): string {
+export function formatImportance(value?: string | number | null): string {
   if (!value) return "—";
+  if (typeof value === "number") {
+    if (value >= 75) return "High";
+    if (value >= 40) return "Medium";
+    return "Low";
+  }
   return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
 }
 
@@ -54,8 +59,9 @@ export function getAfterValue(c: {
   return c.after ?? c.newValue ?? "—";
 }
 
-export function importanceStyles(importance?: string | null): string {
-  switch (importance) {
+export function importanceStyles(importance?: string | number | null): string {
+  const label = typeof importance === "number" ? formatImportance(importance).toUpperCase() : importance;
+  switch (label) {
     case "CRITICAL":
       return "bg-red-950/40 text-red-300 border border-red-800/40";
     case "HIGH":

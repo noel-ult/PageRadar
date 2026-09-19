@@ -27,8 +27,12 @@ export const WATCH_QUERY = gql`
     watch(id: $id) {
       ...WatchCardFields
     }
+    changes(filter: { watchId: $id }) {
+      ...ChangeSummaryFields
+    }
   }
   ${WATCH_CARD_FRAGMENT}
+  ${CHANGE_SUMMARY_FRAGMENT}
 `;
 
 export const RECENT_CHANGES_QUERY = gql`

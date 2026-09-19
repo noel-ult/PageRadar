@@ -13,6 +13,19 @@ npm run dev
 
 Frontend: `http://localhost:3000`; GraphQL API: `http://localhost:3001/graphql`.
 
+## Monitoring and change history
+
+The API runs an in-process monitoring loop every 30 seconds. Each active watch
+is checked when its configured interval (in minutes) is due. The first check
+stores an immutable baseline snapshot. Later content-hash changes create a new
+snapshot, a `CONTENT_CHANGED` record, and a `CheckRun` entry.
+
+For immediate testing, use the **Check now** button on a watch detail page.
+Only public `http` and `https` HTML pages are supported; redirects, private
+network addresses, non-HTML responses, and pages larger than 1.5 MB are
+rejected for safety. The monitor is designed for a single API instance; use a
+distributed job queue before scaling the API to multiple replicas.
+
 ## Docker Deployment
 
 Build and run both the API and Web services using Docker Compose:

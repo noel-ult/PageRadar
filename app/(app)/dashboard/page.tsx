@@ -46,7 +46,9 @@ export default function DashboardPage() {
   const activeWatches =
     watches.filter((w) => w.isActive).length;
   const important = changes.filter((c) =>
-    ["HIGH", "CRITICAL"].includes(c.importance)
+    typeof c.importance === "number"
+      ? c.importance >= 75
+      : ["HIGH", "CRITICAL"].includes(c.importance)
   );
 
   return (

@@ -55,6 +55,17 @@ export const DELETE_WATCH_MUTATION = gql`
   }
 `;
 
+export const CHECK_WATCH_NOW_MUTATION = gql`
+  mutation CheckWatchNow($id: ID!) {
+    checkWatchNow(id: $id) {
+      id
+      status
+      completedAt
+      error
+    }
+  }
+`;
+
 export const UPDATE_WATCH_MUTATION = gql`
   mutation UpdateWatch($id: ID!, $input: UpdateWatchInput!) {
     updateWatch(id: $id, input: $input) {

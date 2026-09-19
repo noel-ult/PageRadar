@@ -9,6 +9,7 @@ import {
   DELETE_WATCH_MUTATION,
   PAUSE_WATCH_MUTATION,
   RESUME_WATCH_MUTATION,
+  CHECK_WATCH_NOW_MUTATION,
 } from "@/graphql/mutations";
 import type { Watch } from "@/lib/types";
 import {
@@ -35,12 +36,13 @@ export default function WatchDetailPage({
   const [pauseWatch, pauseS] = useMutation(PAUSE_WATCH_MUTATION);
   const [resumeWatch, resumeS] = useMutation(RESUME_WATCH_MUTATION);
   const [deleteWatch, deleteS] = useMutation(DELETE_WATCH_MUTATION);
+  const [checkWatch, checkS] = useMutation(CHECK_WATCH_NOW_MUTATION);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const watch: Watch | undefined = (data as any)?.watch;
-  const busy = pauseS.loading || resumeS.loading || deleteS.loading;
+  const busy = pauseS.loading || resumeS.loading || deleteS.loading || checkS.loading;
 
   if (loading) return <LoadingState message="Loading watch..." />;
   if (error || !watch)
@@ -51,7 +53,8 @@ export default function WatchDetailPage({
       />
     );
 
-  const history = watch.changes ?? [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const history = ((data as any)?.changes ?? watch.changes ?? []) as NonNullable<Watch["changes"]>;
   const latest = watch.latestChange ?? history[0] ?? null;
 
   async function wrap(fn: () => Promise<unknown>) {
@@ -120,6 +123,14 @@ export default function WatchDetailPage({
           </p>
         ) : null}
         <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-zinc-800/60">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void wrap(() => checkWatch({ variables: { id } }))}
+            className="rounded-lg bg-teal-400 px-3 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-teal-300 transition disabled:opacity-50"
+          >
+            {checkS.loading ? "Checking..." : "Check now"}
+          </button>
           {watch.isActive ? (
             <button
               type="button"

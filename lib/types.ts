@@ -12,7 +12,7 @@ export type ChangeType =
   | "SECTION_CHANGED"
   | "CONTENT_CHANGED";
 
-export type Importance = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+export type Importance = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | number;
 
 export interface User {
   id: string;
