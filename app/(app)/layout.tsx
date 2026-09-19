@@ -34,7 +34,7 @@ export default function AppGroupLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-[#09090b] text-zinc-100">
       <Header userName={userName} />
       <div className="flex flex-1 flex-col md:flex-row">
         <Sidebar />

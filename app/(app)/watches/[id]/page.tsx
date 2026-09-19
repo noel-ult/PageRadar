@@ -78,54 +78,54 @@ export default function WatchDetailPage({
     <div className="flex flex-col gap-6">
       <Link
         href="/watches"
-        className="w-fit text-sm font-medium text-slate-600 hover:text-slate-900 hover:underline"
+        className="w-fit text-xs font-medium text-zinc-400 hover:text-zinc-200 transition"
       >
         ← Back to watches
       </Link>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{watch.name}</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-zinc-100">{watch.name}</h1>
             <a
               href={watch.url}
               target="_blank"
               rel="noreferrer"
-              className="text-sm text-slate-500 hover:text-slate-700"
+              className="mt-1 block text-xs text-zinc-400 hover:text-zinc-200 truncate max-w-xl transition"
             >
               {watch.url}
             </a>
           </div>
           <WatchStatusBadge isActive={watch.isActive} />
         </div>
-        <dl className="mt-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
+        <dl className="mt-5 grid grid-cols-1 gap-4 text-xs sm:grid-cols-3 pt-5 border-t border-zinc-800/60">
           <div>
-            <dt className="text-xs text-slate-500">Monitoring interval</dt>
-            <dd className="font-medium">{watch.checkIntervalMinutes} minutes</dd>
+            <dt className="text-zinc-500">Check interval</dt>
+            <dd className="mt-1 font-medium text-zinc-200">{watch.checkIntervalMinutes} minutes</dd>
           </div>
           <div>
-            <dt className="text-xs text-slate-500">Last checked</dt>
-            <dd className="font-medium">{formatDateTime(watch.lastCheckedAt)}</dd>
+            <dt className="text-zinc-500">Last checked</dt>
+            <dd className="mt-1 font-medium text-zinc-200">{formatDateTime(watch.lastCheckedAt)}</dd>
           </div>
           <div>
-            <dt className="text-xs text-slate-500">Monitoring</dt>
-            <dd className="font-medium">
-              {watch.interests?.length ? watch.interests.join(", ") : "—"}
+            <dt className="text-zinc-500">Monitored fields</dt>
+            <dd className="mt-1 font-medium text-zinc-200">
+              {watch.interests?.length ? watch.interests.join(", ") : "All"}
             </dd>
           </div>
         </dl>
         {actionError ? (
-          <p role="alert" className="mt-3 text-sm text-red-700">
+          <p role="alert" className="mt-4 text-xs text-red-400">
             {actionError}
           </p>
         ) : null}
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-zinc-800/60">
           {watch.isActive ? (
             <button
               type="button"
               disabled={busy}
               onClick={() => void wrap(() => pauseWatch({ variables: { id } }))}
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              className="rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition disabled:opacity-50"
             >
               {pauseS.loading ? "Pausing..." : "Pause"}
             </button>
@@ -134,7 +134,7 @@ export default function WatchDetailPage({
               type="button"
               disabled={busy}
               onClick={() => void wrap(() => resumeWatch({ variables: { id } }))}
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              className="rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition disabled:opacity-50"
             >
               {resumeS.loading ? "Resuming..." : "Resume"}
             </button>
@@ -143,7 +143,7 @@ export default function WatchDetailPage({
             type="button"
             disabled={busy}
             onClick={() => setConfirmDelete(true)}
-            className="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
+            className="rounded-lg border border-red-900/60 bg-red-950/20 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-950/40 transition disabled:opacity-50"
           >
             Delete
           </button>
@@ -152,16 +152,16 @@ export default function WatchDetailPage({
           <div
             role="alertdialog"
             aria-label="Confirm delete"
-            className="mt-4 rounded-md border border-red-200 bg-red-50 p-4"
+            className="mt-4 rounded-lg border border-red-900/50 bg-red-950/30 p-4"
           >
-            <p className="text-sm text-red-800">
-              Are you sure you want to delete this watch?
+            <p className="text-xs text-red-200">
+              Are you sure you want to delete this watch? This cannot be undone.
             </p>
-            <div className="mt-2 flex gap-2">
+            <div className="mt-3 flex gap-2">
               <button
                 type="button"
                 onClick={() => setConfirmDelete(false)}
-                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700"
+                className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-700"
               >
                 Cancel
               </button>
@@ -169,9 +169,9 @@ export default function WatchDetailPage({
                 type="button"
                 disabled={deleteS.loading}
                 onClick={() => void onDelete()}
-                className="rounded-md bg-red-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-60"
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-500 disabled:opacity-50"
               >
-                {deleteS.loading ? "Deleting watch..." : "Delete"}
+                {deleteS.loading ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
@@ -179,45 +179,47 @@ export default function WatchDetailPage({
       </div>
 
       <section aria-label="Latest change" className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Latest Change</h2>
+        <h2 className="text-sm font-medium text-zinc-200">Latest change</h2>
         {!latest ? (
           <EmptyState title="No changes detected yet." />
         ) : (
-          <div className="rounded-lg border border-slate-200 bg-white p-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-lg font-semibold">
+          <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-medium text-zinc-200">
                 {formatChangeType(latest.changeType)}
               </span>
               <ImportanceBadge importance={latest.importance} />
             </div>
-            <dl className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-              <div className="rounded-md bg-slate-50 p-3">
-                <dt className="text-xs text-slate-500">Before</dt>
-                <dd className="mt-1">{getBeforeValue(latest)}</dd>
+            <dl className="mt-4 grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
+              <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-3">
+                <dt className="text-zinc-500">Previous</dt>
+                <dd className="mt-1 text-zinc-300 line-through decoration-zinc-600">{getBeforeValue(latest)}</dd>
               </div>
-              <div className="rounded-md bg-slate-50 p-3">
-                <dt className="text-xs text-slate-500">After</dt>
-                <dd className="mt-1 font-medium">{getAfterValue(latest)}</dd>
+              <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-3">
+                <dt className="text-zinc-500">Current</dt>
+                <dd className="mt-1 font-medium text-zinc-100">{getAfterValue(latest)}</dd>
               </div>
             </dl>
             {latest.explanation ? (
-              <p className="mt-3 text-sm text-slate-700">{latest.explanation}</p>
+              <p className="mt-3 text-xs text-zinc-400 leading-relaxed">{latest.explanation}</p>
             ) : null}
-            <p className="mt-2 text-xs text-slate-500">
-              Detected {formatDateTime(latest.detectedAt)}
-            </p>
-            <Link
-              href={`/changes/${latest.id}`}
-              className="mt-3 inline-block text-sm font-medium text-slate-900 underline"
-            >
-              View change details
-            </Link>
+            <div className="mt-4 flex items-center justify-between pt-3 border-t border-zinc-800/60 text-xs">
+              <span className="text-zinc-500">
+                Detected {formatDateTime(latest.detectedAt)}
+              </span>
+              <Link
+                href={`/changes/${latest.id}`}
+                className="text-zinc-300 hover:text-zinc-100 underline transition"
+              >
+                View details →
+              </Link>
+            </div>
           </div>
         )}
       </section>
 
       <section aria-label="Change history" className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Change History</h2>
+        <h2 className="text-sm font-medium text-zinc-200">Change history</h2>
         {history.length === 0 ? (
           <EmptyState title="No changes detected yet." />
         ) : (
@@ -225,21 +227,21 @@ export default function WatchDetailPage({
             {history.map((c) => (
               <li
                 key={c.id}
-                className="rounded-lg border border-slate-200 bg-white p-4"
+                className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4 transition hover:bg-zinc-900/70"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Link
                     href={`/changes/${c.id}`}
-                    className="font-medium text-slate-900 hover:underline"
+                    className="text-sm font-medium text-zinc-200 hover:text-white transition"
                   >
                     {formatChangeType(c.changeType)}
                   </Link>
                   <ImportanceBadge importance={c.importance} />
                 </div>
-                <p className="mt-1 text-sm text-slate-600">
-                  {getBeforeValue(c)} → {getAfterValue(c)}
+                <p className="mt-1.5 text-xs text-zinc-400">
+                  <span className="line-through text-zinc-500">{getBeforeValue(c)}</span> → <span className="text-zinc-200">{getAfterValue(c)}</span>
                 </p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-2 text-[11px] text-zinc-500">
                   Detected {formatDateTime(c.detectedAt)}
                 </p>
               </li>

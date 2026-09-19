@@ -25,7 +25,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex w-full flex-row items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-3 md:w-56 md:flex-col md:items-stretch md:justify-start md:border-b-0 md:border-r md:px-3 md:py-6">
+    <aside className="flex w-full flex-row items-center justify-between gap-2 border-b border-zinc-800/80 bg-zinc-950 px-4 py-3 md:w-56 md:flex-col md:items-stretch md:justify-start md:border-b-0 md:border-r md:px-3 md:py-6">
       <nav aria-label="Primary" className="flex flex-row gap-1 md:flex-col">
         {NAV.map((item) => {
           const active =
@@ -35,10 +35,10 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 ${
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition focus:outline-none ${
                 active
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-700 hover:bg-slate-100"
+                  ? "bg-zinc-800 text-white"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
               }`}
             >
               {item.label}
@@ -50,9 +50,9 @@ export function Sidebar() {
         <button
           type="button"
           onClick={handleLogout}
-          className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+          className="rounded-lg px-3 py-2 text-xs font-medium text-zinc-400 hover:bg-zinc-900 hover:text-red-400 transition focus:outline-none"
         >
-          Logout
+          Log out
         </button>
       </div>
     </aside>
@@ -61,16 +61,20 @@ export function Sidebar() {
 
 export function Header({ userName }: { userName?: string }) {
   return (
-    <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:px-6">
+    <header className="flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950 px-4 py-3.5 md:px-6">
       <Link
         href="/dashboard"
-        className="text-base font-bold tracking-tight text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+        className="flex items-center gap-2 text-base font-semibold text-white focus:outline-none"
       >
+        <span className="grid h-6 w-6 place-items-center rounded bg-zinc-800 text-xs font-bold text-white">
+          P
+        </span>
         PageRadar
       </Link>
-      <div className="text-sm text-slate-600" aria-label="Signed in user">
+      <div className="text-xs text-zinc-400" aria-label="Signed in user">
         {userName ?? "User"}
       </div>
     </header>
   );
 }
+

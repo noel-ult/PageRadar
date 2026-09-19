@@ -62,8 +62,8 @@ export function WatchForm() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="watch-name" className="text-sm font-medium text-slate-700">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="watch-name" className="text-xs font-medium text-zinc-300">
           Watch Name
         </label>
         <input
@@ -73,11 +73,11 @@ export function WatchForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. University admissions page"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+          className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none transition"
         />
       </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="watch-url" className="text-sm font-medium text-slate-700">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="watch-url" className="text-xs font-medium text-zinc-300">
           Website URL
         </label>
         <input
@@ -87,12 +87,12 @@ export function WatchForm() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://example.com/admissions"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+          className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none transition"
         />
       </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="watch-interval" className="text-sm font-medium text-slate-700">
-          Monitoring Interval (minutes)
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="watch-interval" className="text-xs font-medium text-zinc-300">
+          Check interval (minutes)
         </label>
         <input
           id="watch-interval"
@@ -103,20 +103,20 @@ export function WatchForm() {
           onChange={(e) =>
             setInterval(e.target.value === "" ? "" : Number(e.target.value))
           }
-          className="w-40 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+          className="w-40 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none transition"
         />
       </div>
       <InterestSelector selected={interests} onChange={setInterests} />
       {formError ? (
-        <p role="alert" className="text-sm text-red-700">
+        <div role="alert" className="rounded-lg border border-red-900/50 bg-red-950/30 p-2.5 text-xs text-red-300">
           {formError}
-        </p>
+        </div>
       ) : null}
       <div>
         <button
           type="submit"
           disabled={loading}
-          className="rounded-md bg-slate-900 px-5 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+          className="rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:opacity-50 transition focus:outline-none"
         >
           {loading ? "Creating watch..." : "Create Watch"}
         </button>

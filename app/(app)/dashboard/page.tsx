@@ -51,47 +51,52 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+      <div className="flex items-center justify-between border-b border-zinc-800/80 pb-5">
+        <div>
+          <h1 className="text-xl font-semibold text-white">Dashboard</h1>
+          <p className="mt-0.5 text-xs text-zinc-400">Overview of your monitored pages and recent changes.</p>
+        </div>
         <Link
           href="/watches/new"
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+          className="rounded-lg bg-white px-3.5 py-2 text-xs font-medium text-zinc-950 hover:bg-zinc-200 transition focus:outline-none"
         >
-          Add Watch
+          + Add watch
         </Link>
       </div>
 
-      <section aria-label="Summary" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <section aria-label="Summary" className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
           { label: "Active Watches", value: activeWatches },
           { label: "Recent Changes", value: changes.length },
-          {
-            label: "Important Changes",
-            value: important.length,
-          },
+          { label: "Important Changes", value: important.length },
         ].map((item) => (
           <div
             key={item.label}
-            className="rounded-lg border border-slate-200 bg-white p-4"
+            className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-5"
           >
-            <p className="text-sm text-slate-500">{item.label}</p>
-            <p className="mt-1 text-3xl font-bold text-slate-900">{item.value}</p>
+            <p className="text-xs font-medium text-zinc-400">{item.label}</p>
+            <p className="mt-2 text-3xl font-semibold text-white">{item.value}</p>
           </div>
         ))}
       </section>
 
       <section aria-label="Recent watches" className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Recent Watches</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-white">Recent Watches</h2>
+          <Link href="/watches" className="text-xs text-zinc-400 hover:text-white transition">
+            View all →
+          </Link>
+        </div>
         {watchesQ.loading && watches.length === 0 ? (
           <LoadingState message="Loading watches..." />
         ) : watches.length === 0 ? (
           <EmptyState
-            title="You are not monitoring any webpages yet."
-            description="Add a webpage and choose what matters — PageRadar will watch it for meaningful changes."
+            title="No active watches."
+            description="Add a webpage to monitor it for meaningful updates."
             action={
               <Link
                 href="/watches/new"
-                className="inline-block rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                className="inline-block rounded-lg bg-white px-3.5 py-2 text-xs font-medium text-zinc-950 hover:bg-zinc-200"
               >
                 Add a Watch
               </Link>
@@ -107,13 +112,13 @@ export default function DashboardPage() {
       </section>
 
       <section aria-label="Recent changes" className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Recent Changes</h2>
+        <h2 className="text-sm font-semibold text-white">Recent Changes</h2>
         {changesQ.loading && changes.length === 0 ? (
           <LoadingState message="Loading changes..." />
         ) : changes.length === 0 ? (
           <EmptyState
             title="No changes detected yet."
-            description="When PageRadar detects a meaningful change, it will appear here with before/after details."
+            description="When meaningful changes are detected, they will appear here."
           />
         ) : (
           <div className="grid grid-cols-1 gap-3">

@@ -3,21 +3,23 @@ import { WatchForm } from "@/components/watches/WatchForm";
 
 export default function NewWatchPage() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5 max-w-2xl">
       <Link
         href="/watches"
-        className="w-fit text-sm font-medium text-slate-600 hover:text-slate-900 hover:underline"
+        className="w-fit text-xs font-medium text-zinc-400 hover:text-zinc-200 transition"
       >
         ← Back to watches
       </Link>
-      <h1 className="text-2xl font-bold tracking-tight">Add Watch</h1>
-      <p className="text-sm text-slate-600">
-        Add a webpage, then choose what matters. PageRadar monitors it and
-        explains meaningful changes as before → after.
-      </p>
-      <div className="max-w-2xl rounded-lg border border-slate-200 bg-white p-5">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight text-zinc-100">Add Watch</h1>
+        <p className="mt-1 text-xs text-zinc-400">
+          Add a webpage to monitor. PageRadar periodically checks for changes and highlights what changed.
+        </p>
+      </div>
+      <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-6">
         <WatchForm />
       </div>
     </div>
   );
 }
+

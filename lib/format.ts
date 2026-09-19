@@ -57,15 +57,15 @@ export function getAfterValue(c: {
 export function importanceStyles(importance?: string | null): string {
   switch (importance) {
     case "CRITICAL":
-      return "bg-red-100 text-red-800 ring-red-200";
+      return "bg-red-950/40 text-red-300 border border-red-800/40";
     case "HIGH":
-      return "bg-orange-100 text-orange-800 ring-orange-200";
+      return "bg-amber-950/40 text-amber-300 border border-amber-800/40";
     case "MEDIUM":
-      return "bg-yellow-100 text-yellow-800 ring-yellow-200";
+      return "bg-zinc-800 text-zinc-300 border border-zinc-700";
     case "LOW":
-      return "bg-slate-100 text-slate-700 ring-slate-200";
+      return "bg-zinc-800/60 text-zinc-400 border border-zinc-700/60";
     default:
-      return "bg-slate-100 text-slate-700 ring-slate-200";
+      return "bg-zinc-800/60 text-zinc-400 border border-zinc-700/60";
   }
 }
 

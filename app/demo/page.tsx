@@ -6,37 +6,198 @@ import { useMemo, useState } from "react";
 type Priority = "High" | "Medium" | "Low";
 
 const watches = [
-  { name: "National scholarship programme", url: "education.gov.example/scholarships", interval: "Every 6 hours", state: "Watching", changes: 2, color: "bg-violet-500" },
-  { name: "Atlas Pro pricing", url: "atlas.example/pricing", interval: "Every 12 hours", state: "Watching", changes: 1, color: "bg-sky-500" },
-  { name: "Open grant calls", url: "funding.example/open-calls", interval: "Daily", state: "Paused", changes: 0, color: "bg-amber-500" },
+  { name: "University admissions", url: "admissions.university.edu", interval: "Every 6 hours", state: "Active", changes: 2 },
+  { name: "SaaS pro pricing", url: "cloudtool.com/pricing", interval: "Every 12 hours", state: "Active", changes: 1 },
+  { name: "Research grant calls", url: "grants.foundation.org", interval: "Daily", state: "Paused", changes: 0 },
 ];
 
 const changes = [
-  { id: "deadline", site: "National scholarship programme", type: "Deadline changed", priority: "High" as Priority, before: "Applications close 12 January 2027", after: "Applications close 19 January 2027", time: "8 minutes ago", note: "The application deadline moved forward by seven days." },
-  { id: "price", site: "Atlas Pro pricing", type: "Price changed", priority: "Medium" as Priority, before: "$49 per editor / month", after: "$39 per editor / month", time: "2 hours ago", note: "The annual plan promotional price has been updated." },
-  { id: "eligibility", site: "National scholarship programme", type: "Eligibility changed", priority: "High" as Priority, before: "Open to final-year students", after: "Open to all undergraduate students", time: "Yesterday", note: "The eligibility section now includes first through third-year students." },
+  {
+    id: "deadline",
+    site: "University admissions",
+    type: "Deadline extended",
+    priority: "High" as Priority,
+    before: "Applications close 12 January 2027",
+    after: "Applications close 19 January 2027",
+    time: "8 mins ago",
+    note: "The application deadline was extended by seven days.",
+  },
+  {
+    id: "price",
+    site: "SaaS pro pricing",
+    type: "Price change",
+    priority: "Medium" as Priority,
+    before: "$49 / month",
+    after: "$39 / month",
+    time: "2 hours ago",
+    note: "Promotional monthly subscription pricing reduced by $10.",
+  },
+  {
+    id: "eligibility",
+    site: "Research grant calls",
+    type: "Eligibility updated",
+    priority: "High" as Priority,
+    before: "Open to final-year students only",
+    after: "Open to all undergraduate students",
+    time: "Yesterday",
+    note: "Grant eligibility was widened to include first through third-year students.",
+  },
 ];
 
-const priorityStyle: Record<Priority, string> = { High: "bg-rose-100 text-rose-700", Medium: "bg-amber-100 text-amber-700", Low: "bg-slate-100 text-slate-600" };
+const priorityBadge: Record<Priority, string> = {
+  High: "bg-red-950/40 text-red-300 border border-red-800/40",
+  Medium: "bg-amber-950/40 text-amber-300 border border-amber-800/40",
+  Low: "bg-zinc-800 text-zinc-300 border border-zinc-700",
+};
 
 export default function DemoPage() {
   const [filter, setFilter] = useState<"All" | Priority>("All");
   const [selected, setSelected] = useState(changes[0].id);
-  const visibleChanges = useMemo(() => filter === "All" ? changes : changes.filter((change) => change.priority === filter), [filter]);
-  const focused = changes.find((change) => change.id === selected) ?? changes[0];
+  const visibleChanges = useMemo(
+    () => (filter === "All" ? changes : changes.filter((c) => c.priority === filter)),
+    [filter]
+  );
+  const focused = changes.find((c) => c.id === selected) ?? changes[0];
 
   return (
-    <main className="min-h-screen bg-[#f5f8fc] text-slate-900">
-      <header className="border-b border-slate-200 bg-white"><div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5"><Link href="/" className="flex items-center gap-2 text-lg font-black tracking-tight"><span className="grid h-8 w-8 place-items-center rounded-lg bg-slate-900 text-sm text-teal-300">P</span>PageRadar <span className="rounded-full bg-teal-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-teal-800">Demo</span></Link><Link href="/register" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-700">Start monitoring</Link></div></header>
-      <div className="mx-auto grid max-w-7xl gap-6 px-5 py-8 lg:grid-cols-[220px_1fr]">
-        <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"><p className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-[.14em] text-slate-400">Workspace</p><a className="mb-1 flex rounded-lg bg-slate-900 px-3 py-2 text-sm font-bold text-white">Overview</a><a className="flex rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Watches <span className="ml-auto text-slate-400">3</span></a><a className="flex rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Changes <span className="ml-auto text-slate-400">3</span></a><div className="mt-6 rounded-xl bg-teal-50 p-3"><p className="text-xs font-bold text-teal-800">Demo workspace</p><p className="mt-1 text-xs leading-5 text-teal-700">This screen uses safe sample data. Connect your account to watch real pages.</p></div></aside>
-        <section className="min-w-0"><div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-semibold text-teal-700">Thursday, 18 September</p><h1 className="mt-1 text-3xl font-black tracking-tight">Your change radar</h1><p className="mt-2 text-slate-500">A focused view of what changed across your monitored pages.</p></div><button className="rounded-xl bg-teal-500 px-4 py-2.5 text-sm font-bold text-slate-950 shadow-sm shadow-teal-500/30 hover:bg-teal-400">+ Add a watch</button></div>
-          <div className="grid gap-4 sm:grid-cols-3">{[["3", "Active watches", "All systems checking"], ["3", "Changes found", "In the last 24 hours"], ["2", "Need attention", "High-priority updates"]].map(([value, label, detail], index) => <article key={label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className={`h-1.5 w-10 rounded-full ${index === 2 ? "bg-rose-400" : "bg-teal-400"}`} /><p className="mt-5 text-3xl font-black">{value}</p><p className="mt-1 text-sm font-bold text-slate-700">{label}</p><p className="mt-1 text-xs text-slate-400">{detail}</p></article>)}</div>
-          <div className="mt-7 grid gap-6 xl:grid-cols-[1.05fr_.95fr]"><section><div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-black">Monitored pages</h2><button className="text-sm font-bold text-teal-700">View all</button></div><div className="space-y-3">{watches.map((watch) => <article key={watch.name} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${watch.color} text-sm font-black text-white`}>{watch.name.charAt(0)}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{watch.name}</p><p className="truncate text-xs text-slate-400">{watch.url}</p><p className="mt-2 text-xs text-slate-500">{watch.interval}</p></div><div className="text-right"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ${watch.state === "Watching" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{watch.state}</span><p className="mt-2 text-xs text-slate-400">{watch.changes ? `${watch.changes} updates` : "No updates"}</p></div></article>)}</div></section>
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p className="text-xs font-bold uppercase tracking-[.14em] text-slate-400">Selected change</p><div className="mt-2 flex items-center justify-between gap-3"><div><h2 className="font-black">{focused.type}</h2><p className="mt-1 text-sm text-slate-500">{focused.site}</p></div><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${priorityStyle[focused.priority]}`}>{focused.priority}</span></div><p className="mt-5 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-600">{focused.note}</p><div className="mt-4 grid gap-3"><div className="rounded-xl border border-rose-100 bg-rose-50 p-3"><p className="text-xs font-bold uppercase tracking-wider text-rose-500">Before</p><p className="mt-1 text-sm font-semibold text-slate-700">{focused.before}</p></div><div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3"><p className="text-xs font-bold uppercase tracking-wider text-emerald-600">After</p><p className="mt-1 text-sm font-semibold text-slate-700">{focused.after}</p></div></div></section></div>
-          <section className="mt-7"><div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-black">Detected changes</h2><div className="flex gap-1 rounded-xl bg-slate-200/70 p-1">{(["All", "High", "Medium", "Low"] as const).map((option) => <button key={option} onClick={() => setFilter(option)} className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${filter === option ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>{option}</button>)}</div></div><div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">{visibleChanges.map((change) => <button key={change.id} onClick={() => setSelected(change.id)} className={`flex w-full items-center gap-4 border-b border-slate-100 p-4 text-left last:border-0 hover:bg-slate-50 ${change.id === selected ? "bg-teal-50/50" : ""}`}><span className="grid h-9 w-9 place-items-center rounded-lg bg-slate-100 text-slate-500">↗</span><span className="min-w-0 flex-1"><span className="block text-sm font-bold">{change.type}</span><span className="block truncate text-xs text-slate-400">{change.site} · {change.time}</span></span><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${priorityStyle[change.priority]}`}>{change.priority}</span></button>)}</div></section>
-        </section>
+    <main className="min-h-screen bg-[#09090b] text-zinc-100 font-sans">
+      {/* Header */}
+      <header className="border-b border-zinc-800/80 bg-zinc-950 px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 text-base font-semibold text-white">
+            <span className="grid h-6 w-6 place-items-center rounded bg-zinc-800 text-xs font-bold text-white">
+              P
+            </span>
+            PageRadar
+            <span className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400 font-normal">
+              Demo
+            </span>
+          </Link>
+          <div className="flex items-center gap-4 text-sm">
+            <Link href="/" className="text-zinc-400 hover:text-white transition">
+              Overview
+            </Link>
+            <Link
+              href="/register"
+              className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-zinc-950 hover:bg-zinc-200 transition"
+            >
+              Sign up
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <div className="mx-auto max-w-6xl px-6 py-8">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-white">Monitored Pages</h1>
+            <p className="mt-1 text-sm text-zinc-400">
+              Interactive preview of detected webpage updates.
+            </p>
+          </div>
+          <Link
+            href="/register"
+            className="rounded-lg border border-zinc-700 bg-zinc-800/80 px-3.5 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-700 transition"
+          >
+            + Add webpage
+          </Link>
+        </div>
+
+        {/* Stats */}
+        <div className="grid gap-4 sm:grid-cols-3 mb-8">
+          {[
+            { val: "3", label: "Active watches", note: "Checked on schedule" },
+            { val: "3", label: "Changes found", note: "In the last 24 hours" },
+            { val: "2", label: "Needs attention", note: "High importance updates" },
+          ].map((stat) => (
+            <div key={stat.label} className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-5">
+              <p className="text-xs font-medium text-zinc-400">{stat.label}</p>
+              <p className="mt-2 text-3xl font-semibold text-white">{stat.val}</p>
+              <p className="mt-1 text-xs text-zinc-500">{stat.note}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Content Layout */}
+        <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          {/* Changes Feed */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white">Detected Changes</h2>
+              <div className="flex gap-1 rounded-lg bg-zinc-900 p-1 border border-zinc-800 text-xs">
+                {(["All", "High", "Medium", "Low"] as const).map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => setFilter(option)}
+                    className={`rounded px-2.5 py-1 transition ${
+                      filter === option
+                        ? "bg-zinc-800 text-white font-medium shadow-sm"
+                        : "text-zinc-400 hover:text-zinc-200"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              {visibleChanges.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setSelected(c.id)}
+                  className={`w-full rounded-xl border p-4 text-left transition ${
+                    selected === c.id
+                      ? "border-zinc-700 bg-zinc-900/70"
+                      : "border-zinc-800/80 bg-zinc-950 hover:bg-zinc-900/30"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-medium text-white">{c.type}</p>
+                      <p className="text-xs text-zinc-400 mt-0.5">
+                        {c.site} · {c.time}
+                      </p>
+                    </div>
+                    <span className={`rounded px-2 py-0.5 text-xs font-medium ${priorityBadge[c.priority]}`}>
+                      {c.priority}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Selected Change Details */}
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-6 h-fit">
+            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+              <div>
+                <h3 className="text-base font-semibold text-white">{focused.type}</h3>
+                <p className="text-xs text-zinc-400 mt-0.5">{focused.site}</p>
+              </div>
+              <span className={`rounded px-2 py-0.5 text-xs font-medium ${priorityBadge[focused.priority]}`}>
+                {focused.priority}
+              </span>
+            </div>
+
+            <p className="mt-4 text-sm text-zinc-300 leading-relaxed">{focused.note}</p>
+
+            <div className="mt-5 space-y-3 text-sm">
+              <div className="rounded-xl border border-red-950/40 bg-red-950/20 p-3.5">
+                <p className="text-xs font-medium text-red-400 mb-1">Before</p>
+                <p className="text-red-200 line-through text-xs leading-relaxed">{focused.before}</p>
+              </div>
+              <div className="rounded-xl border border-emerald-950/40 bg-emerald-950/20 p-3.5">
+                <p className="text-xs font-medium text-emerald-400 mb-1">After</p>
+                <p className="text-emerald-200 text-xs leading-relaxed">{focused.after}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );
 }
+
+

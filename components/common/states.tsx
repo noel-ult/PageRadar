@@ -3,11 +3,11 @@ export function LoadingState({ message = "Loading..." }: { message?: string }) {
     <div
       role="status"
       aria-live="polite"
-      className="flex items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-10 text-slate-600"
+      className="flex items-center justify-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-10 text-xs text-zinc-400"
     >
       <span
         aria-hidden="true"
-        className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700"
+        className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-zinc-700 border-t-zinc-300"
       />
       <span>{message}</span>
     </div>
@@ -24,10 +24,10 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-      <p className="text-base font-semibold text-slate-800">{title}</p>
+    <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-800 bg-zinc-900/20 px-6 py-12 text-center">
+      <p className="text-sm font-semibold text-white">{title}</p>
       {description ? (
-        <p className="max-w-md text-sm text-slate-600">{description}</p>
+        <p className="max-w-md text-xs text-zinc-400">{description}</p>
       ) : null}
       {action ? <div className="mt-3">{action}</div> : null}
     </div>
@@ -44,15 +44,14 @@ export function ErrorState({
   return (
     <div
       role="alert"
-      className="rounded-lg border border-red-200 bg-red-50 px-4 py-6 text-center"
+      className="rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-6 text-center"
     >
-      <p className="text-sm font-semibold text-red-800">{message}</p>
-      <p className="mt-1 text-sm text-red-700">Please try again.</p>
+      <p className="text-xs font-medium text-red-300">{message}</p>
       {onRetry ? (
         <button
           type="button"
           onClick={onRetry}
-          className="mt-3 rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+          className="mt-3 rounded-lg bg-zinc-800 border border-zinc-700 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 transition"
         >
           Try again
         </button>

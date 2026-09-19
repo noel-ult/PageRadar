@@ -6,13 +6,13 @@ import { WatchStatusBadge } from "./WatchStatus";
 export function WatchCard({ watch }: { watch: Watch }) {
   const latest = watch.latestChange;
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4">
+    <article className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 transition hover:border-zinc-700">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold text-slate-900">
+          <h3 className="truncate text-sm font-semibold text-white">
             <Link
               href={`/watches/${watch.id}`}
-              className="hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+              className="hover:underline focus:outline-none"
             >
               {watch.name}
             </Link>
@@ -21,40 +21,40 @@ export function WatchCard({ watch }: { watch: Watch }) {
             href={watch.url}
             target="_blank"
             rel="noreferrer"
-            className="block truncate text-sm text-slate-500 hover:text-slate-700"
+            className="block truncate text-xs text-zinc-400 hover:text-zinc-300 mt-0.5"
           >
             {watch.url}
           </a>
         </div>
         <WatchStatusBadge isActive={watch.isActive} />
       </div>
-      <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <dt className="text-xs text-slate-500">Interval</dt>
-          <dd className="font-medium text-slate-800">
-            {watch.checkIntervalMinutes} min
+      <dl className="mt-3.5 grid grid-cols-2 gap-2 text-xs">
+        <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/60 p-2.5">
+          <dt className="text-zinc-500">Interval</dt>
+          <dd className="mt-0.5 font-medium text-zinc-200">
+            Every {watch.checkIntervalMinutes} min
           </dd>
         </div>
-        <div>
-          <dt className="text-xs text-slate-500">Last checked</dt>
-          <dd className="font-medium text-slate-800">
+        <div className="rounded-lg border border-zinc-800/80 bg-zinc-950/60 p-2.5">
+          <dt className="text-zinc-500">Last checked</dt>
+          <dd className="mt-0.5 font-medium text-zinc-200 truncate">
             {formatDateTime(watch.lastCheckedAt)}
           </dd>
         </div>
       </dl>
       {latest ? (
-        <p className="mt-3 border-t border-slate-100 pt-3 text-sm text-slate-600">
+        <p className="mt-3.5 border-t border-zinc-800/80 pt-3 text-xs text-zinc-400">
           Latest:{" "}
           <Link
             href={`/changes/${latest.id}`}
-            className="font-medium text-slate-900 hover:underline"
+            className="font-medium text-white hover:underline"
           >
             {formatChangeType(latest.changeType)}
           </Link>{" "}
           · {formatDateTime(latest.detectedAt)}
         </p>
       ) : (
-        <p className="mt-3 border-t border-slate-100 pt-3 text-sm text-slate-500">
+        <p className="mt-3.5 border-t border-zinc-800/80 pt-3 text-xs text-zinc-500">
           No changes detected yet.
         </p>
       )}
