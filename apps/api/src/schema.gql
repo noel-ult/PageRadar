@@ -38,6 +38,24 @@ enum ChangeType {
   STATUS_CHANGED
 }
 
+type CheckRunModel {
+  completedAt: DateTime
+  error: String
+  id: ID!
+  startedAt: DateTime!
+  status: CheckRunStatus!
+  watchId: ID!
+}
+
+enum CheckRunStatus {
+  CHANGE_DETECTED
+  FAILED
+  NO_CHANGE
+  QUEUED
+  RUNNING
+  SUCCESS
+}
+
 input CreateWatchInput {
   checkInterval: Int!
   title: String!
@@ -69,6 +87,7 @@ input LoginInput {
 }
 
 type Mutation {
+  checkWatchNow(id: ID!): CheckRunModel!
   createWatch(input: CreateWatchInput!): WatchModel!
   deleteWatch(id: ID!): Boolean!
   login(input: LoginInput!): AuthPayload!

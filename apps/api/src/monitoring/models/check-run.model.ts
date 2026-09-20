@@ -11,5 +11,6 @@ export class CheckRunModel {
   @Field(() => CheckRunStatus) status!: CheckRunStatus;
   @Field(() => GraphQLISODateTime) startedAt!: Date;
   @Field(() => GraphQLISODateTime, { nullable: true }) completedAt!: Date | null;
-  @Field({ nullable: true }) error!: string | null;
+  @Field(() => String, { nullable: true }) error!: string | null;
 }
+
