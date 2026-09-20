@@ -32,7 +32,9 @@ export default function WatchDetailPage({
   const router = useRouter();
   const { data, loading, error, refetch } = useQuery(WATCH_QUERY, {
     variables: { id },
+    pollInterval: 10_000,
   });
+
   const [pauseWatch, pauseS] = useMutation(PAUSE_WATCH_MUTATION);
   const [resumeWatch, resumeS] = useMutation(RESUME_WATCH_MUTATION);
   const [deleteWatch, deleteS] = useMutation(DELETE_WATCH_MUTATION);

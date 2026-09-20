@@ -5,9 +5,10 @@ import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import { PrismaService } from '../prisma/prisma.service';
 
-const MAX_CONTENT_BYTES = 1_500_000;
-const FETCH_TIMEOUT_MS = 15_000;
+const MAX_CONTENT_BYTES = 3_000_000;
+const FETCH_TIMEOUT_MS = 20_000;
 const TICK_MS = 30_000;
+
 
 @Injectable()
 export class MonitoringService implements OnModuleInit, OnModuleDestroy {
@@ -96,15 +97,29 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
     const addresses = await lookup(url.hostname, { all: true, verbatim: true });
     if (!addresses.length || addresses.some(({ address }) => this.isPrivateAddress(address))) throw new Error('Watch URL resolves to a private network address');
 
-    const response = await fetch(url, { redirect: 'manual', headers: { Accept: 'text/html,application/xhtml+xml' }, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+    const response = await fetch(url, {
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
     if (!response.ok) throw new Error(`Page returned HTTP ${response.status}`);
-    if (!response.headers.get('content-type')?.toLowerCase().includes('text/html')) throw new Error('Watch URL did not return HTML');
+    const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
+    if (!contentType.includes('text/html') && !contentType.includes('application/xhtml+xml')) {
+      throw new Error('Watch URL did not return HTML');
+    }
     const declaredSize = Number(response.headers.get('content-length') ?? 0);
-    if (declaredSize > MAX_CONTENT_BYTES) throw new Error('Page exceeds the 1.5 MB monitoring limit');
+    if (declaredSize > MAX_CONTENT_BYTES) throw new Error('Page exceeds the 3 MB monitoring limit');
     const bytes = new Uint8Array(await response.arrayBuffer());
-    if (bytes.byteLength > MAX_CONTENT_BYTES) throw new Error('Page exceeds the 1.5 MB monitoring limit');
+    if (bytes.byteLength > MAX_CONTENT_BYTES) throw new Error('Page exceeds the 3 MB monitoring limit');
     return new TextDecoder().decode(bytes).replace(/<!--[^]*?-->/g, '').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '').replace(/\s+/g, ' ').trim();
   }
+
 
   private excerpt(content: string) {
     return content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1_000);

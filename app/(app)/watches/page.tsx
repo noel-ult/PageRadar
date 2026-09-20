@@ -15,7 +15,10 @@ import { LoadingState, EmptyState, ErrorState } from "@/components/common/states
 import { WatchStatusBadge } from "@/components/watches/WatchStatus";
 
 export default function WatchesPage() {
-  const { data, loading, error, refetch } = useQuery(WATCHES_QUERY);
+  const { data, loading, error, refetch } = useQuery(WATCHES_QUERY, {
+    pollInterval: 10_000,
+  });
+
   const [pauseWatch, pauseState] = useMutation(PAUSE_WATCH_MUTATION);
   const [resumeWatch, resumeState] = useMutation(RESUME_WATCH_MUTATION);
   const [deleteWatch, deleteState] = useMutation(DELETE_WATCH_MUTATION);

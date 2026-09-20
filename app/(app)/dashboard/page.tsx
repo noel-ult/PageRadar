@@ -13,10 +13,12 @@ import { ChangeCard } from "@/components/changes/ChangeCard";
 import { friendlyErrorMessage } from "@/lib/format";
 
 export default function DashboardPage() {
-  const watchesQ = useQuery(WATCHES_QUERY);
+  const watchesQ = useQuery(WATCHES_QUERY, { pollInterval: 10_000 });
   const changesQ = useQuery(RECENT_CHANGES_QUERY, {
     variables: { limit: 10 },
+    pollInterval: 10_000,
   });
+
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
