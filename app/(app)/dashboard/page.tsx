@@ -21,10 +21,32 @@ export default function DashboardPage() {
 
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawWatches: any[] = ((watchesQ.data as any)?.watches ?? []) as any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const watches: Watch[] = ((watchesQ.data as any)?.watches ?? []) as Watch[];
+  const rawChanges: any[] = ((changesQ.data as any)?.changes ?? []) as any[];
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const changes = (((changesQ.data as any)?.changes ?? []) as any[]).slice(0, 5);
+  const changes = rawChanges.map((c: any) => {
+    const matchedWatch = rawWatches.find(
+      (w: any) => w.id === c.watchId || w.id === c.watch?.id
+    );
+    return {
+      ...c,
+      watch:
+        c.watch ??
+        (matchedWatch
+          ? { name: matchedWatch.name ?? matchedWatch.title, url: matchedWatch.url }
+          : null),
+    };
+  }).slice(0, 5);
+
+  const watches: Watch[] = rawWatches.map((w: any) => ({
+    ...w,
+    latestChange:
+      w.latestChange ??
+      rawChanges.find((c: any) => c.watchId === w.id || c.watch?.id === w.id),
+  })) as Watch[];
+
 
   const loading = watchesQ.loading || changesQ.loading;
   const error = watchesQ.error ?? changesQ.error;

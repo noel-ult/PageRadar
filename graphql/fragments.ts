@@ -3,6 +3,7 @@ import { gql } from "@apollo/client";
 export const CHANGE_SUMMARY_FRAGMENT = gql`
   fragment ChangeSummaryFields on ChangeModel {
     id
+    watchId
     changeType: type
     importance
     section
@@ -12,6 +13,11 @@ export const CHANGE_SUMMARY_FRAGMENT = gql`
     newValue
     explanation: reason
     detectedAt
+    watch {
+      id
+      name: title
+      url
+    }
   }
 `;
 
@@ -24,5 +30,11 @@ export const WATCH_CARD_FRAGMENT = gql`
     checkIntervalMinutes: checkInterval
     lastCheckedAt
     createdAt
+    latestChange {
+      id
+      changeType: type
+      importance
+      detectedAt
+    }
   }
 `;

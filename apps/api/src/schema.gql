@@ -24,6 +24,7 @@ type ChangeModel {
   reason: String
   section: String
   type: ChangeType!
+  watch: WatchModel
   watchId: ID!
 }
 
@@ -165,6 +166,7 @@ type WatchModel {
   id: ID!
   isActive: Boolean!
   lastCheckedAt: DateTime
+  latestChange: ChangeModel
   title: String!
   updatedAt: DateTime!
   url: String!
