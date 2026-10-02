@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { NOTIFICATIONS_PAGE_QUERY } from "@/graphql/queries";
 import { MARK_NOTIFICATION_READ_MUTATION } from "@/graphql/mutations";
+import { Icon } from "@/components/common/Icon";
 import { formatDateTime } from "@/lib/format";
 import {
   LoadingState,
@@ -31,13 +32,17 @@ export default function NotificationsPage() {
   const connection = data?.notificationsPage;
   return (
     <div className="grid gap-6">
-      <h1 className="text-xl font-semibold">Notifications</h1>
-      <Link
-        href="/notifications/settings"
-        className="w-fit text-sm text-teal-300 underline"
-      >
-        Email notification settings
-      </Link>
+      <div className="page-heading mb-0">
+        <div>
+          <p className="eyebrow mb-2">Your inbox</p>
+          <h1>Notifications</h1>
+          <p>Updates that match what you care about.</p>
+        </div>
+        <Link href="/notifications/settings" className="btn">
+          <Icon name="settings" />
+          Email notification settings
+        </Link>
+      </div>
       {error ? (
         <RefreshError
           onRetry={() => {
@@ -46,7 +51,7 @@ export default function NotificationsPage() {
         />
       ) : null}
       {actionError ? (
-        <p role="alert" className="text-sm text-red-300">
+        <p role="alert" className="text-sm text-danger">
           {actionError}
         </p>
       ) : null}
@@ -60,17 +65,24 @@ export default function NotificationsPage() {
           {connection.nodes.map((item) => (
             <li
               key={item.id}
-              className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4"
+              className={`panel p-5 ${!item.readAt ? "border-l-4 border-l-primary" : ""}`}
             >
-              <p className="text-sm">
-                {!item.readAt ? "Unread · " : ""}
+              <div className="flex items-center gap-2 mb-3">
+                <Icon name="bell" className="text-primary size-4" />
+                <span
+                  className={`badge ${!item.readAt ? "badge-primary" : ""}`}
+                >
+                  {item.readAt ? "Read" : "Unread"}
+                </span>
+              </div>
+              <p className="text-base leading-relaxed break-words">
                 {item.message}
               </p>
-              <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-zinc-400">
+              <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted">
                 <time>{formatDateTime(item.createdAt)}</time>
                 {item.changeId ? (
                   <Link
-                    className="text-teal-300 underline"
+                    className="text-primary underline"
                     href={`/changes/${item.changeId}`}
                   >
                     View details
@@ -89,7 +101,7 @@ export default function NotificationsPage() {
                           ),
                         )
                     }
-                    className="rounded border border-zinc-700 px-3 py-1.5"
+                    className="btn btn-sm"
                   >
                     Mark read
                   </button>
@@ -104,7 +116,7 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={() => setAfter(null)}
-            className="rounded border border-zinc-700 px-3 py-2 text-xs"
+            className="btn btn-sm"
           >
             Latest alerts
           </button>
@@ -113,7 +125,7 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={() => setAfter(connection.pageInfo.endCursor ?? null)}
-            className="rounded border border-zinc-700 px-3 py-2 text-xs"
+            className="btn btn-sm"
           >
             Older alerts
           </button>

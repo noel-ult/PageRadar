@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { use } from "react";
 import { useQuery } from "@apollo/client/react";
 import { WATCH_QUERY } from "@/graphql/queries";
@@ -26,8 +27,17 @@ export default function EditWatchPage({
       />
     );
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6">
-      <h1 className="text-xl font-semibold">Edit watch</h1>
+    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+      <Link href={`/watches/${id}`} className="link text-sm">
+        ← Back to page
+      </Link>
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow mb-2">Monitoring preferences</p>
+          <h1>Edit page</h1>
+          <p>Adjust your source, check frequency, and alerts.</p>
+        </div>
+      </div>
       <WatchForm key={data.watch.id} watch={data.watch} />
     </div>
   );

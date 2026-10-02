@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@apollo/client/react";
 import { LOGIN_MUTATION } from "@/graphql/mutations";
 import { clearLegacyToken } from "@/lib/auth";
 import { friendlyErrorMessage } from "@/lib/format";
+import { PasswordInput } from "./PasswordInput";
 import { useHydrated } from "@/lib/useHydrated";
 
 function extractToken(data: unknown): string | null {
@@ -22,6 +23,7 @@ function extractToken(data: unknown): string | null {
 
 export function LoginForm() {
   const hydrated = useHydrated();
+  const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,9 +32,15 @@ export function LoginForm() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     setFormError(null);
     if (!email.trim() || !password) {
       setFormError("Email and password are required.");
+      formRef.current
+        ?.querySelector<HTMLInputElement>(
+          !email.trim() ? "#email" : "#password",
+        )
+        ?.focus();
       return;
     }
     try {
@@ -53,17 +61,21 @@ export function LoginForm() {
 
   return (
     <form
+      ref={formRef}
+      aria-describedby={formError ? "auth-error" : undefined}
       method="post"
       onSubmit={onSubmit}
       noValidate
       className="flex flex-col gap-4"
     >
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-xs font-medium text-zinc-300">
+        <label htmlFor="email" className="text-sm font-medium text-muted">
           Email
         </label>
         <input
           id="email"
+          aria-invalid={Boolean(formError && !email.trim())}
+          aria-describedby={formError ? "auth-error" : undefined}
           name="email"
           type="email"
           autoComplete="email"
@@ -71,29 +83,31 @@ export function LoginForm() {
           placeholder="name@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none transition"
+          className="rounded-lg border border-line bg-canvas px-3 py-3 text-base text-ink placeholder:text-muted focus:border-line focus:outline-none transition"
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className="text-xs font-medium text-zinc-300">
+        <label htmlFor="password" className="text-sm font-medium text-muted">
           Password
         </label>
-        <input
+        <PasswordInput
           id="password"
+          aria-invalid={Boolean(formError && !password)}
+          aria-describedby={formError ? "auth-error" : undefined}
           name="password"
-          type="password"
           autoComplete="current-password"
           required
           placeholder="••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none transition"
+          className="rounded-lg border border-line bg-canvas px-3 py-3 text-base text-ink placeholder:text-muted focus:border-line focus:outline-none transition"
         />
       </div>
       {formError ? (
         <div
+          id="auth-error"
           role="alert"
-          className="rounded-lg border border-red-900/50 bg-red-950/30 p-2.5 text-xs text-red-300"
+          className="rounded-lg border border-danger/50 bg-danger-soft/30 p-2.5 text-sm text-danger"
         >
           {formError}
         </div>
@@ -101,16 +115,13 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={!hydrated || loading}
-        className="mt-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:opacity-50 transition"
+        className="btn btn-primary mt-2"
       >
         {loading ? "Signing in..." : "Sign in"}
       </button>
-      <p className="text-center text-xs text-zinc-400 mt-2">
+      <p className="text-center text-sm text-muted mt-2">
         Don&apos;t have an account?{" "}
-        <Link
-          href="/register"
-          className="text-white hover:underline font-medium"
-        >
+        <Link href="/register" className="text-ink hover:underline font-medium">
           Sign up
         </Link>
       </p>

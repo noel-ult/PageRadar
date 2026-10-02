@@ -8,6 +8,8 @@ export function ConfirmDialog({
   error,
   onCancel,
   onConfirm,
+  confirmLabel = "Delete",
+  busyLabel = "Deleting…",
 }: {
   open: boolean;
   title: string;
@@ -16,6 +18,8 @@ export function ConfirmDialog({
   error?: string | null;
   onCancel: () => void;
   onConfirm: () => void;
+  confirmLabel?: string;
+  busyLabel?: string;
 }) {
   const titleId = useId();
   const descriptionId = useId();
@@ -34,16 +38,16 @@ export function ConfirmDialog({
         event.preventDefault();
         if (!busy) onCancel();
       }}
-      className="m-auto w-[min(28rem,calc(100%-2rem))] rounded-xl border border-zinc-700 bg-zinc-950 p-6 text-zinc-100 backdrop:bg-black/70"
+      className="m-auto w-[min(28rem,calc(100%-2rem))] rounded-xl border border-line bg-surface p-6 text-ink backdrop:bg-ink/30 max-h-[calc(100dvh-2rem)] overflow-y-auto"
     >
       <h2 id={titleId} className="text-lg font-semibold">
         {title}
       </h2>
-      <p id={descriptionId} className="mt-3 text-sm text-zinc-400">
+      <p id={descriptionId} className="mt-3 text-sm text-muted">
         {description}
       </p>
       {error ? (
-        <p role="alert" className="mt-3 text-sm text-red-300">
+        <p role="alert" className="mt-3 text-sm text-danger">
           {error}
         </p>
       ) : null}
@@ -53,7 +57,7 @@ export function ConfirmDialog({
           type="button"
           disabled={busy}
           onClick={onCancel}
-          className="rounded-lg border border-zinc-700 px-4 py-2 text-sm"
+          className="btn"
         >
           Cancel
         </button>
@@ -62,9 +66,9 @@ export function ConfirmDialog({
           disabled={busy}
           aria-busy={busy}
           onClick={onConfirm}
-          className="min-w-24 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium disabled:opacity-50"
+          className="btn btn-danger min-w-24"
         >
-          {busy ? "Deleting…" : "Delete"}
+          {busy ? busyLabel : confirmLabel}
         </button>
       </div>
     </dialog>

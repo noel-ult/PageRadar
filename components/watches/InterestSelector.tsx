@@ -16,24 +16,24 @@ export function InterestSelector({
 
   return (
     <fieldset>
-      <legend className="text-xs font-medium text-zinc-300">
+      <legend className="text-sm font-medium text-muted">
         What changes should we look for?
       </legend>
       <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {INTEREST_OPTIONS.map((opt) => (
           <label
             key={opt.value}
-            className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-xs transition ${
+            className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-3 text-sm transition ${
               selected.includes(opt.value)
-                ? "border-zinc-700 bg-zinc-800/80 text-white"
-                : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700"
+                ? "border-line bg-accent-soft text-primary border-primary"
+                : "border-line bg-canvas text-muted hover:border-primary"
             }`}
           >
             <input
               type="checkbox"
               checked={selected.includes(opt.value)}
               onChange={() => toggle(opt.value)}
-              className="h-4 w-4 rounded border-zinc-700 accent-white"
+              className="h-4 w-4 rounded border-line accent-primary"
             />
             {opt.label}
           </label>

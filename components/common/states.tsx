@@ -1,19 +1,19 @@
+import { Icon } from "./Icon";
 export function LoadingState({ message = "Loading..." }: { message?: string }) {
   return (
     <div
       role="status"
       aria-live="polite"
-      className="flex items-center justify-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/30 px-4 py-10 text-xs text-zinc-400"
+      className="panel flex items-center justify-center gap-3 px-5 py-12 text-sm text-muted"
     >
       <span
         aria-hidden="true"
-        className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-zinc-700 border-t-zinc-300"
+        className="size-5 animate-spin rounded-full border-2 border-line border-t-primary"
       />
-      <span>{message}</span>
+      {message}
     </div>
   );
 }
-
 export function EmptyState({
   title,
   description,
@@ -24,16 +24,20 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-800 bg-zinc-900/20 px-6 py-12 text-center">
-      <p className="text-sm font-semibold text-white">{title}</p>
+    <div className="panel flex flex-col items-center gap-3 px-6 py-12 text-center">
+      <span className="rounded-2xl bg-accent-soft p-4 text-primary">
+        <Icon name="signal" />
+      </span>
+      <h3 className="text-lg font-bold mt-2">{title}</h3>
       {description ? (
-        <p className="max-w-md text-xs text-zinc-400">{description}</p>
+        <p className="text-sm text-muted max-w-md leading-relaxed">
+          {description}
+        </p>
       ) : null}
       {action ? <div className="mt-3">{action}</div> : null}
     </div>
   );
 }
-
 export function ErrorState({
   message,
   onRetry,
@@ -44,15 +48,11 @@ export function ErrorState({
   return (
     <div
       role="alert"
-      className="rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-6 text-center"
+      className="rounded-xl border border-danger/30 bg-danger-soft p-6 text-center"
     >
-      <p className="text-xs font-medium text-red-300">{message}</p>
+      <p className="text-sm text-danger">{message}</p>
       {onRetry ? (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="mt-3 rounded-lg bg-zinc-800 border border-zinc-700 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 transition"
-        >
+        <button type="button" onClick={onRetry} className="btn mt-4">
           Try again
         </button>
       ) : null}
@@ -63,14 +63,10 @@ export function RefreshError({ onRetry }: { onRetry: () => void }) {
   return (
     <div
       role="status"
-      className="flex flex-wrap items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-900/40 px-4 py-3 text-xs text-zinc-300"
+      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning-soft p-4 mb-5 text-sm"
     >
       <p>Updates are temporarily unavailable. Showing the last loaded data.</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="rounded border border-zinc-600 px-3 py-1.5 text-white hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
-      >
+      <button type="button" onClick={onRetry} className="btn btn-sm">
         Try again
       </button>
     </div>

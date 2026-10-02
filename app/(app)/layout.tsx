@@ -15,11 +15,14 @@ export default function AppGroupLayout({
   const userName = data?.me?.name;
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#09090b] text-zinc-100">
-      <Header userName={userName} />
-      <div className="flex flex-1 flex-col md:flex-row">
-        <Sidebar />
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-8">
+    <div className="app-shell">
+      <a href="#main-content" className="skip-link btn btn-primary">
+        Skip to content
+      </a>
+      <Sidebar />
+      <div className="workspace-main">
+        <Header userName={userName} />
+        <main id="main-content" className="workspace-content">
           {children}
         </main>
       </div>

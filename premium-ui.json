@@ -13,5 +13,8 @@
   "evidence": {
     "crudFullFlow": "tests/e2e/main.spec.ts",
     "failurePaths": "tests/e2e/main.spec.ts"
+  },
+  "ownership": {
+    "Select/Listbox": "native"
   }
 }

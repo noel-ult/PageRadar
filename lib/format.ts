@@ -25,7 +25,7 @@ export function formatChangeType(value?: string | null): string {
 }
 
 export function formatImportance(value?: string | number | null): string {
-  if (!value) return "—";
+  if (value === undefined || value === null || value === "") return "—";
   if (typeof value === "number") {
     if (value >= 75) return "High";
     if (value >= 40) return "Medium";
@@ -59,25 +59,6 @@ export function getAfterValue(c: {
   newValue?: string | null;
 }): string {
   return c.after ?? c.newValue ?? "—";
-}
-
-export function importanceStyles(importance?: string | number | null): string {
-  const label =
-    typeof importance === "number"
-      ? formatImportance(importance).toUpperCase()
-      : importance;
-  switch (label) {
-    case "CRITICAL":
-      return "bg-red-950/40 text-red-300 border border-red-800/40";
-    case "HIGH":
-      return "bg-amber-950/40 text-amber-300 border border-amber-800/40";
-    case "MEDIUM":
-      return "bg-zinc-800 text-zinc-300 border border-zinc-700";
-    case "LOW":
-      return "bg-zinc-800/60 text-zinc-400 border border-zinc-700/60";
-    default:
-      return "bg-zinc-800/60 text-zinc-400 border border-zinc-700/60";
-  }
 }
 
 /** User-friendly message for Apollo/GraphQL errors. Never leaks stack traces. */

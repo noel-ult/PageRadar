@@ -43,7 +43,7 @@ test("real browser registration, session, watch, deadline and notification", asy
   await expect(page.getByText("Changes detected")).toBeVisible({
     timeout: 20000,
   });
-  await page.getByRole("link", { name: "View details →" }).click();
+  await page.getByRole("link", { name: "View change" }).click();
   await expect(
     page.getByRole("region", { name: "After", exact: true }),
   ).toContainText("December 1");

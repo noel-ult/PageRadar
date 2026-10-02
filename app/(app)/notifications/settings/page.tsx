@@ -17,6 +17,7 @@ import {
   LoadingState,
   RefreshError,
 } from "@/components/common/states";
+import { Icon } from "@/components/common/Icon";
 import { formatDateTime, friendlyErrorMessage } from "@/lib/format";
 
 const deliveryLabels: Record<string, string> = {
@@ -86,22 +87,24 @@ export default function NotificationSettingsPage() {
       setError(friendlyErrorMessage(failure));
     }
   }
-  const button =
-    "rounded-lg border border-zinc-700 bg-zinc-950 px-3.5 py-2 text-sm text-white hover:bg-zinc-800 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400";
+  const button = "btn";
   return (
-    <div className="mx-auto grid max-w-2xl gap-6">
+    <div className="mx-auto grid max-w-5xl gap-6">
       <Link
         href="/notifications"
-        className="w-fit text-sm text-zinc-400 hover:text-white"
+        className="w-fit text-sm text-muted hover:text-ink"
       >
         ← Notifications
       </Link>
-      <div>
-        <h1 className="text-xl font-semibold">Notification settings</h1>
-        <p className="mt-2 text-sm text-zinc-400">
-          Receive important webpage updates in your inbox, even when PageRadar
-          is closed.
-        </p>
+      <div className="page-heading mb-0">
+        <div>
+          <p className="eyebrow mb-2">Stay informed</p>
+          <h1>Notification settings</h1>
+          <p className="mt-2 text-sm text-muted">
+            Receive important webpage updates in your inbox, even when PageRadar
+            is closed.
+          </p>
+        </div>
       </div>
       {settings.error ? (
         <RefreshError
@@ -113,7 +116,7 @@ export default function NotificationSettingsPage() {
       {error ? (
         <p
           role="alert"
-          className="rounded-lg border border-red-900/50 bg-red-950/20 p-4 text-sm text-red-300"
+          className="rounded-lg border border-danger/50 bg-danger-soft/20 p-4 text-sm text-danger"
         >
           {error}
         </p>
@@ -121,7 +124,7 @@ export default function NotificationSettingsPage() {
       {feedback ? (
         <p
           role="status"
-          className="rounded-lg border border-zinc-700 p-4 text-sm text-teal-300"
+          className="rounded-lg border border-line p-4 text-sm text-primary"
         >
           {feedback}
         </p>
@@ -129,7 +132,7 @@ export default function NotificationSettingsPage() {
       {!data.available ? (
         <p
           role="status"
-          className="rounded-lg border border-zinc-700 p-4 text-sm text-zinc-300"
+          className="rounded-lg border border-line p-4 text-sm text-muted"
         >
           Email delivery is not available yet. Your watches continue collecting
           changes.
@@ -138,90 +141,100 @@ export default function NotificationSettingsPage() {
       {data.suppressed ? (
         <p
           role="alert"
-          className="rounded-lg border border-red-900/50 p-4 text-sm text-red-300"
+          className="rounded-lg border border-danger/50 p-4 text-sm text-danger"
         >
           {data.suppressionReason} Contact support to restore email delivery.
         </p>
       ) : null}
-      <section
-        aria-label="Email address"
-        className="grid gap-4 rounded-xl border border-zinc-800 bg-zinc-900/30 p-5"
-      >
-        <div>
-          <h2 className="text-sm font-semibold">Email address</h2>
-          <p className="mt-2 break-words text-sm text-zinc-300">{data.email}</p>
-          <p className="mt-2 text-xs text-zinc-400">
-            {data.verifiedAt ? "Verified" : "Verification required"}
+      <div className="grid lg:grid-cols-2 gap-5 items-start">
+        <section aria-label="Email address" className="panel grid gap-4 p-6">
+          <div>
+            <div className="flex gap-3 items-center">
+              <Icon name="globe" className="text-primary" />
+              <h2 className="text-lg font-bold">Email address</h2>
+            </div>
+            <p className="mt-2 break-words text-sm text-muted">{data.email}</p>
+            <p
+              className={`badge mt-3 ${data.verifiedAt ? "badge-success" : "badge-warning"}`}
+            >
+              {data.verifiedAt ? "Verified" : "Verification required"}
+            </p>
+            <p className="text-sm text-muted mt-4">
+              Verify ownership of your address before enabling email delivery.
+            </p>
+          </div>
+          {!data.verifiedAt ? (
+            <button
+              type="button"
+              disabled={busy || !data.available || data.suppressed || cooldown}
+              onClick={() => void action("verify")}
+              className={`${button} btn-wrap`}
+            >
+              {verification.loading
+                ? "Queuing email…"
+                : cooldown
+                  ? "Verification requested — wait one minute"
+                  : "Send verification email"}
+            </button>
+          ) : null}
+        </section>
+        <section aria-label="Email alerts" className="panel grid gap-4 p-6">
+          <div className="flex gap-3 items-center">
+            <Icon name="bell" className="text-primary" />
+            <h2 className="text-lg font-bold">Important change alerts</h2>
+          </div>
+          <p className="text-sm text-muted">
+            Alerts use each watch’s categories and minimum importance. Changes
+            from one page check arrive together. Detection follows your watch’s
+            check interval.
           </p>
-        </div>
-        {!data.verifiedAt ? (
-          <button
-            type="button"
-            disabled={busy || !data.available || data.suppressed || cooldown}
-            onClick={() => void action("verify")}
-            className={button}
-          >
-            {verification.loading
-              ? "Queuing email…"
-              : cooldown
-                ? "Verification requested — wait one minute"
-                : "Send verification email"}
-          </button>
-        ) : null}
-      </section>
-      <section
-        aria-label="Email alerts"
-        className="grid gap-4 rounded-xl border border-zinc-800 bg-zinc-900/30 p-5"
-      >
-        <h2 className="text-sm font-semibold">Important change alerts</h2>
-        <p className="text-sm text-zinc-400">
-          Alerts use each watch’s categories and minimum importance. Changes
-          from one page check arrive together. Detection follows your watch’s
-          check interval.
-        </p>
-        <p className="text-sm">
-          Email alerts: <strong>{data.enabled ? "On" : "Off"}</strong>
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            disabled={
-              busy ||
-              (!data.enabled &&
-                (!data.available || !data.verifiedAt || data.suppressed))
-            }
-            onClick={() => void action("toggle")}
-            className={button}
-          >
-            {preference.loading
-              ? "Saving…"
-              : data.enabled
-                ? "Turn off email alerts"
-                : "Enable email alerts"}
-          </button>
-          <button
-            type="button"
-            disabled={
-              busy || !data.available || !data.verifiedAt || data.suppressed
-            }
-            onClick={() => void action("test")}
-            className={button}
-          >
-            {testEmail.loading ? "Queuing test…" : "Send test email"}
-          </button>
-        </div>
-        {!data.verifiedAt ? (
-          <p className="text-xs text-zinc-400">
-            Verify your address to enable alerts and send a test email.
+          <p className="text-sm">
+            Email alerts: <strong>{data.enabled ? "On" : "Off"}</strong>
           </p>
-        ) : null}
-        <Link href="/watches" className="w-fit text-sm text-teal-300 underline">
-          Manage email preferences for each watch
-        </Link>
-      </section>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              disabled={
+                busy ||
+                (!data.enabled &&
+                  (!data.available || !data.verifiedAt || data.suppressed))
+              }
+              onClick={() => void action("toggle")}
+              className={button}
+            >
+              {preference.loading
+                ? "Saving…"
+                : data.enabled
+                  ? "Turn off email alerts"
+                  : "Enable email alerts"}
+            </button>
+            <button
+              type="button"
+              disabled={
+                busy || !data.available || !data.verifiedAt || data.suppressed
+              }
+              onClick={() => void action("test")}
+              className={button}
+            >
+              {testEmail.loading ? "Queuing test…" : "Send test email"}
+            </button>
+          </div>
+          {!data.verifiedAt ? (
+            <p className="text-sm text-muted">
+              Verify your address to enable alerts and send a test email.
+            </p>
+          ) : null}
+          <Link
+            href="/watches"
+            className="w-fit text-sm text-primary underline"
+          >
+            Manage email preferences for each watch
+          </Link>
+        </section>
+      </div>
       <section aria-label="Email delivery history" className="grid gap-3">
-        <h2 className="text-sm font-semibold">Email delivery history</h2>
-        <p className="text-xs text-zinc-400">
+        <h2 className="text-lg font-bold mt-3">Email delivery history</h2>
+        <p className="text-sm text-muted">
           Accepted means the email service received the message. Delivered means
           the receiving mail server accepted it.
         </p>
@@ -246,15 +259,14 @@ export default function NotificationSettingsPage() {
         ) : history.data?.emailDeliveriesPage.nodes.length ? (
           <ul className="grid gap-3">
             {history.data.emailDeliveriesPage.nodes.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-xl border border-zinc-800 p-4"
-              >
+              <li key={item.id} className="panel p-5">
                 <p className="text-sm break-words">{item.message}</p>
-                <p className="mt-2 text-xs text-zinc-300">
+                <p
+                  className={`badge mt-3 ${item.status === "DELIVERED" ? "badge-success" : ["FAILED", "BOUNCED", "COMPLAINED"].includes(item.status) ? "badge-danger" : "badge-primary"}`}
+                >
                   {deliveryLabels[item.status] ?? item.status}
                 </p>
-                <time className="mt-2 block text-xs text-zinc-500">
+                <time className="mt-2 block text-sm text-muted">
                   {formatDateTime(
                     item.deliveredAt ?? item.sentAt ?? item.createdAt,
                   )}

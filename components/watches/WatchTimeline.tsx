@@ -35,8 +35,8 @@ export function WatchTimeline({ id }: { id: string }) {
     );
   const connection = data?.checkRuns;
   return (
-    <section aria-label="Monitoring timeline" className="grid gap-3">
-      <h2 className="text-sm font-medium">Monitoring timeline</h2>
+    <section aria-label="Monitoring timeline" className="grid gap-4">
+      <h2 className="text-lg font-bold">Monitoring timeline</h2>
       {error ? (
         <RefreshError
           onRetry={() => {
@@ -45,7 +45,7 @@ export function WatchTimeline({ id }: { id: string }) {
         />
       ) : null}
       {loading && !data ? (
-        <p role="status" className="text-sm text-zinc-400">
+        <p role="status" className="text-sm text-muted">
           Loading history…
         </p>
       ) : !connection?.nodes.length ? (
@@ -54,12 +54,9 @@ export function WatchTimeline({ id }: { id: string }) {
           description="PageRadar will capture a baseline before reporting changes."
         />
       ) : (
-        <ol className="grid gap-3">
+        <ol className="signal-feed">
           {connection.nodes.map((run) => (
-            <li
-              key={run.id}
-              className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4"
-            >
+            <li key={run.id} className="panel signal-card">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p
                   className="text-sm font-medium"
@@ -72,12 +69,12 @@ export function WatchTimeline({ id }: { id: string }) {
                   {labels[run.status]}
                   {run.attempts > 1 ? ` · attempt ${run.attempts}` : ""}
                 </p>
-                <time className="text-xs text-zinc-400">
+                <time className="text-sm text-muted">
                   {formatDateTime(run.completedAt ?? run.startedAt)}
                 </time>
               </div>
               {run.error ? (
-                <p className="mt-2 break-words text-xs text-amber-300">
+                <p className="mt-2 break-words text-sm text-warning">
                   {run.error}
                   {run.status === "RETRYING"
                     ? ` Next attempt: ${formatDateTime(run.nextAttemptAt)}`
@@ -87,30 +84,30 @@ export function WatchTimeline({ id }: { id: string }) {
               {run.changes.map((change) => (
                 <article
                   key={change.id}
-                  className="mt-4 border-t border-zinc-800 pt-3"
+                  className="mt-4 border-t border-line pt-3"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <Link
                       href={`/changes/${change.id}`}
-                      className="text-sm text-teal-300 underline"
+                      className="text-sm text-primary underline"
                     >
                       {change.section ?? "Page content"}
                     </Link>
                     <ImportanceBadge importance={change.importance} />
                   </div>
-                  <p className="mt-2 text-sm text-zinc-300">
+                  <p className="mt-2 text-sm text-muted">
                     {change.explanation}
                   </p>
                   <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
                     <div>
-                      <dt className="text-zinc-500">Previous</dt>
-                      <dd className="whitespace-pre-wrap break-words text-zinc-400">
+                      <dt className="text-muted">Previous</dt>
+                      <dd className="whitespace-pre-wrap break-words text-muted">
                         {change.before || "—"}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-zinc-500">Current</dt>
-                      <dd className="whitespace-pre-wrap break-words text-zinc-200">
+                      <dt className="text-muted">Current</dt>
+                      <dd className="whitespace-pre-wrap break-words text-ink">
                         {change.after || "—"}
                       </dd>
                     </div>
@@ -126,7 +123,7 @@ export function WatchTimeline({ id }: { id: string }) {
           <button
             type="button"
             onClick={() => setAfter(null)}
-            className="rounded-lg border border-zinc-700 px-3 py-2 text-xs"
+            className="btn btn-sm"
           >
             Latest checks
           </button>
@@ -136,7 +133,7 @@ export function WatchTimeline({ id }: { id: string }) {
             type="button"
             disabled={loading}
             onClick={() => setAfter(connection.pageInfo.endCursor ?? null)}
-            className="rounded-lg border border-zinc-700 px-3 py-2 text-xs"
+            className="btn btn-sm"
           >
             Older checks
           </button>

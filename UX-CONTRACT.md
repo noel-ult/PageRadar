@@ -29,3 +29,20 @@ Read views revalidate on navigation and refresh in the background every 5–15 s
 The address, verification, opt-in and suppression states remain separate. Unavailable providers have an explicit state with disabled send actions. Turning alerts off remains available during a provider outage. Queued means waiting for submission; accepted means provider acceptance; delivered means recipient server acceptance. No state claims inbox placement. Send failures preserve settings and show a recoverable message.
 
 Verification: `apps/api/src/notifications/email.service.spec.ts`, isolated PostgreSQL/Redis integration, and `tests/e2e/email.spec.ts` on desktop and mobile.
+
+## Intelligence workspace redesign
+
+The approved design in DESIGN.md replaces the previous appearance across all existing routes. Routes, permission checks, monitoring schedules, stored preferences, and notification delivery semantics retain their existing owners.
+
+| Capability | Canonical owner                                   | Source of truth                                  | Allowed variants                                                     | Verification                           |
+| ---------- | ------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------- | -------------------------------------- |
+| Theme      | ThemeControl.tsx; app/layout.tsx; app/globals.css | Device preference and pageradar-theme-v1         | light / dark / system                                                | tests/e2e/design.spec.ts               |
+| Navigation | components/layout/chrome.tsx                      | Existing application routes                      | Desktop sidebar / mobile modal drawer                                | tests/e2e/design.spec.ts; main.spec.ts |
+| Evidence   | BeforeAfter.tsx; ChangeCard.tsx                   | Persisted change values, explanation, importance | Full evidence / capped feed excerpt / clearly labeled public example | main.spec.ts; design.spec.ts           |
+| Password   | components/auth/PasswordInput.tsx                 | Login/register form values                       | Hidden by default / explicit show                                    | tests/e2e/design.spec.ts               |
+
+Monitored pages use server cursor pagination. Desktop tables and mobile cards show the same page records and actions; no search or filtering of a partial dataset is represented as a global search. Overview prioritizes importance within the latest ten changes and labels the view as recent updates. Important-change and failed-check counts are across history; changes-this-week reflects the existing seven-day API count.
+
+The mobile navigation uses a native modal dialog: focus remains inside, Escape closes, and closing restores the navigation trigger. Theme selects deliberately retain native platform popup behavior. Global theme initialization precedes paint; changing the device preference updates System mode only. Theme preference is independent of authentication.
+
+WatchForm tracks unsaved preferences. In-app links open the shared confirmation dialog with a Discard changes action; Cancel keeps all values. Successful saves permit their established destination. A beforeunload guard covers tab close/reload. Browser history navigation is not intercepted by this link guard. Native browser lifecycle confirmation is used only for actual unload.

@@ -3,6 +3,7 @@
 import { ApolloProvider } from "@apollo/client/react";
 import { getApolloClient } from "@/lib/apollo/client";
 import { useEffect } from "react";
+import { ThemeLifecycle } from "@/components/common/ThemeControl";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const client = getApolloClient();
@@ -33,5 +34,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
       document.removeEventListener("visibilitychange", refresh);
     };
   }, [client]);
-  return <ApolloProvider client={client}>{children}</ApolloProvider>;
+  return (
+    <ApolloProvider client={client}>
+      <ThemeLifecycle />
+      {children}
+    </ApolloProvider>
+  );
 }

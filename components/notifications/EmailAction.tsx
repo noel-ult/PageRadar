@@ -7,6 +7,8 @@ import {
   UNSUBSCRIBE_EMAIL_ALERTS,
 } from "@/graphql/mutations";
 import { friendlyErrorMessage } from "@/lib/format";
+import { Brand } from "@/components/common/Brand";
+import { ThemeControl } from "@/components/common/ThemeControl";
 import { LoadingState } from "@/components/common/states";
 
 export function EmailAction({ kind }: { kind: "verify" | "unsubscribe" }) {
@@ -39,11 +41,12 @@ export function EmailAction({ kind }: { kind: "verify" | "unsubscribe" }) {
     }
   }
   return (
-    <main className="mx-auto grid min-h-screen max-w-lg content-center gap-5 px-6 py-12">
-      <Link href="/" className="w-fit text-sm font-semibold">
-        PageRadar
-      </Link>
-      <h1 className="text-xl font-semibold">
+    <main className="mx-auto grid min-h-screen max-w-xl content-center gap-5 px-6 py-12">
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <Brand />
+        <ThemeControl />
+      </div>
+      <h1 className="text-3xl font-bold">
         {kind === "verify"
           ? completed
             ? "Email address verified"
@@ -56,31 +59,31 @@ export function EmailAction({ kind }: { kind: "verify" | "unsubscribe" }) {
         <LoadingState message="Loading email link…" />
       ) : completed ? (
         <>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             {kind === "verify"
               ? "Your address is verified. Enable alerts in notification settings to receive important changes."
               : "You will no longer receive change-alert emails. You can enable them again in notification settings."}
           </p>
           <Link
             href="/notifications/settings"
-            className="w-fit text-sm text-teal-300 underline"
+            className="w-fit text-sm text-primary underline"
           >
             Notification settings
           </Link>
         </>
       ) : !/^[A-Za-z0-9_-]{43}$/.test(token) ? (
-        <p role="alert" className="text-sm text-red-300">
+        <p role="alert" className="text-sm text-danger">
           This link is invalid. Open the complete link from your email.
         </p>
       ) : (
         <>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-muted">
             {kind === "verify"
               ? "Confirm that this is your email address. Email alerts require a separate opt-in in settings."
               : "Turn off all PageRadar change-alert emails for this account. Queued alerts will be cancelled."}
           </p>
           {error ? (
-            <p role="alert" className="text-sm text-red-300">
+            <p role="alert" className="text-sm text-danger">
               {error}
             </p>
           ) : null}
@@ -88,7 +91,7 @@ export function EmailAction({ kind }: { kind: "verify" | "unsubscribe" }) {
             type="button"
             disabled={busy}
             onClick={() => void confirm()}
-            className="rounded-lg bg-white px-4 py-3 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
+            className="rounded-lg bg-primary px-4 py-3 text-sm font-medium text-on-primary hover:bg-primary/90 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             {busy
               ? "Confirming…"

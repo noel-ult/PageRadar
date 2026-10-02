@@ -1,11 +1,22 @@
-import { formatImportance, importanceStyles } from "@/lib/format";
-
-export function ImportanceBadge({ importance }: { importance?: string | number | null }) {
+import { formatImportance } from "@/lib/format";
+export function ImportanceBadge({
+  importance,
+}: {
+  importance?: string | number | null;
+}) {
+  const label = formatImportance(importance);
+  const tone =
+    label === "Critical"
+      ? "badge-danger"
+      : label === "High"
+        ? "badge-warning"
+        : label === "Medium"
+          ? "badge-primary"
+          : "";
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${importanceStyles(importance)}`}
-    >
-      {formatImportance(importance)}
+    <span className={`badge ${tone}`}>
+      <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
+      {label}
     </span>
   );
 }

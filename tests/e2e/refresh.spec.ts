@@ -119,7 +119,7 @@ test("polling retains visible data and recovers after a failed refresh", async (
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/watches");
   await expect(
-    page.getByRole("heading", { name: "Scholarship", exact: true }),
+    page.getByRole("link", { name: "Scholarship", exact: true }),
   ).toBeVisible();
 
   let release!: () => void;
@@ -129,20 +129,20 @@ test("polling retains visible data and recovers after a failed refresh", async (
   state.name = "Extended deadline";
   await expect.poll(() => state.listRequests, { timeout: 15_000 }).toBe(2);
   await expect(
-    page.getByRole("heading", { name: "Scholarship", exact: true }),
+    page.getByRole("link", { name: "Scholarship", exact: true }),
   ).toBeVisible();
   await expect(page.getByText("Loading watches...")).not.toBeVisible();
   release();
   state.hold = undefined;
   await expect(
-    page.getByRole("heading", { name: "Extended deadline", exact: true }),
+    page.getByRole("link", { name: "Extended deadline", exact: true }),
   ).toBeVisible();
 
   state.fail = true;
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await expect(page.getByText(/Showing the last loaded data/)).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Extended deadline", exact: true }),
+    page.getByRole("link", { name: "Extended deadline", exact: true }),
   ).toBeVisible();
   await page.screenshot({
     path: `/tmp/pageradar-refresh-${test.info().project.name}.png`,
@@ -153,7 +153,7 @@ test("polling retains visible data and recovers after a failed refresh", async (
   state.name = "Recovered update";
   await page.evaluate(() => window.dispatchEvent(new Event("online")));
   await expect(
-    page.getByRole("heading", { name: "Recovered update", exact: true }),
+    page.getByRole("link", { name: "Recovered update", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByText(/Showing the last loaded data/),
@@ -168,9 +168,14 @@ test("cached navigation refreshes immediately and settings preserve unsaved edit
   const state = await fixture(page, context);
   await page.goto("/watches");
   await expect(
-    page.getByRole("heading", { name: "Scholarship", exact: true }),
+    page.getByRole("link", { name: "Scholarship", exact: true }),
   ).toBeVisible();
-  const navigation = page.getByRole("navigation", { name: "Primary" });
+  const mobile = (page.viewportSize()?.width ?? 1280) < 901;
+  if (mobile)
+    await page.getByRole("button", { name: "Open navigation" }).click();
+  const navigation = page
+    .getByRole("navigation", { name: "Primary" })
+    .filter({ visible: true });
   await navigation
     .getByRole("link", { name: "Notifications", exact: true })
     .click();
@@ -182,16 +187,20 @@ test("cached navigation refreshes immediately and settings preserve unsaved edit
   });
   state.name = "Latest scholarship";
   const requests = state.listRequests;
-  await navigation.getByRole("link", { name: "Watches", exact: true }).click();
+  if (mobile)
+    await page.getByRole("button", { name: "Open navigation" }).click();
+  await navigation
+    .getByRole("link", { name: "Monitored pages", exact: true })
+    .click();
   await expect.poll(() => state.listRequests).toBeGreaterThan(requests);
   await expect(
-    page.getByRole("heading", { name: "Scholarship", exact: true }),
+    page.getByRole("link", { name: "Scholarship", exact: true }),
   ).toBeVisible();
   await expect(page.getByText("Loading watches...")).not.toBeVisible();
   release();
   state.hold = undefined;
   await expect(
-    page.getByRole("heading", { name: "Latest scholarship", exact: true }),
+    page.getByRole("link", { name: "Latest scholarship", exact: true }),
   ).toBeVisible();
 
   await page.goto(`/watches/${watchId}/edit`);
@@ -227,9 +236,12 @@ test("refreshing an already loaded empty dashboard does not flash a loader", asy
   state.empty = true;
   await page.goto("/dashboard");
   await expect(
-    page.getByRole("heading", { name: "Dashboard", exact: true }),
+    page.getByRole("heading", {
+      name: "Stay ahead of what changes.",
+      exact: true,
+    }),
   ).toBeVisible();
-  await expect(page.getByText("No active watches.")).toBeVisible();
+  await expect(page.getByText("Your radar is ready.")).toBeVisible();
   await expect(page.getByText("No changes detected yet.")).toBeVisible();
   let release!: () => void;
   state.hold = new Promise<void>((resolve) => {
@@ -240,7 +252,10 @@ test("refreshing an already loaded empty dashboard does not flash a loader", asy
   await expect.poll(() => state.listRequests).toBeGreaterThan(requests);
   await expect(page.getByText("Loading watches...")).not.toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Dashboard", exact: true }),
+    page.getByRole("heading", {
+      name: "Stay ahead of what changes.",
+      exact: true,
+    }),
   ).toBeVisible();
   release();
   state.hold = undefined;
@@ -254,7 +269,7 @@ test("hidden and offline tabs pause polling and refresh when available again", a
   const state = await fixture(page, context);
   await page.goto("/watches");
   await expect(
-    page.getByRole("heading", { name: "Scholarship", exact: true }),
+    page.getByRole("link", { name: "Scholarship", exact: true }),
   ).toBeVisible();
   await page.evaluate(() => {
     Object.defineProperty(document, "visibilityState", {
@@ -276,7 +291,7 @@ test("hidden and offline tabs pause polling and refresh when available again", a
     document.dispatchEvent(new Event("visibilitychange"));
   });
   await expect(
-    page.getByRole("heading", { name: "Back in view", exact: true }),
+    page.getByRole("link", { name: "Back in view", exact: true }),
   ).toBeVisible();
 
   await context.setOffline(true);
@@ -285,11 +300,11 @@ test("hidden and offline tabs pause polling and refresh when available again", a
   await page.waitForTimeout(11_000);
   expect(state.listRequests).toBe(beforeOffline);
   await expect(
-    page.getByRole("heading", { name: "Back in view", exact: true }),
+    page.getByRole("link", { name: "Back in view", exact: true }),
   ).toBeVisible();
   state.name = "Reconnected";
   await context.setOffline(false);
   await expect(
-    page.getByRole("heading", { name: "Reconnected", exact: true }),
+    page.getByRole("link", { name: "Reconnected", exact: true }),
   ).toBeVisible();
 });

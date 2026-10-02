@@ -1,152 +1,151 @@
 import Link from "next/link";
-
-const changes = [
+import { PublicHeader } from "@/components/layout/PublicHeader";
+import { BriefPreview } from "@/components/changes/BriefPreview";
+import { Brand } from "@/components/common/Brand";
+import { ThemeControl } from "@/components/common/ThemeControl";
+import { Icon, type IconName } from "@/components/common/Icon";
+const uses: { title: string; copy: string; icon: IconName }[] = [
   {
-    title: "University admissions",
-    change: "Deadline extended",
-    priority: "High",
-    diff: "Jan 12 → Jan 19",
+    title: "Opportunities",
+    copy: "Scholarships, admissions, internships, and jobs. Follow the next opening or deadline.",
+    icon: "pages",
   },
   {
-    title: "Pro plan pricing",
-    change: "Price reduced",
-    priority: "Medium",
-    diff: "$49 → $39 / mo",
+    title: "Research & updates",
+    copy: "New papers, documentation, college notices, and government announcements.",
+    icon: "globe",
   },
   {
-    title: "Grant programme",
-    change: "Eligibility expanded",
-    priority: "High",
-    diff: "All undergraduates eligible",
-  },
-];
-
-const features = [
-  {
-    number: "01",
-    title: "Watch what matters",
-    description:
-      "Add any public page and set a check interval that fits how often the information actually changes.",
-  },
-  {
-    number: "02",
-    title: "See the signal",
-    description:
-      "A clear before-and-after view shows precisely what was added or changed, without making you re-read the page.",
-  },
-  {
-    number: "03",
-    title: "Zero false noise",
-    description:
-      "Cookie consent popups, rotating banners, and dynamic timestamps are filtered out automatically.",
+    title: "Products & policies",
+    copy: "Track prices, requirements, and policy updates that affect your decisions.",
+    icon: "signal",
   },
 ];
-
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#09090b] text-zinc-100">
-      <div className="mx-auto max-w-5xl px-6 py-8 sm:px-8">
-        {/* Navigation */}
-        <header className="flex items-center justify-between border-b border-zinc-800/80 pb-6">
-          <Link href="/" className="flex items-center gap-2.5 text-base font-semibold tracking-tight text-white">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-zinc-800 text-xs font-bold text-white">
-              P
-            </span>
-            PageRadar
-          </Link>
-          <div className="flex items-center gap-4 text-sm">
-            <Link href="/login" className="text-zinc-400 hover:text-white transition">
-              Sign in
-            </Link>
-            <Link
-              href="/demo"
-              className="rounded-lg bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-950 hover:bg-white transition"
-            >
-              Live demo
-            </Link>
-          </div>
-        </header>
-
-        {/* Hero Section */}
-        <section className="py-20 sm:py-28">
-          <div className="max-w-2xl">
-            <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">
-              Webpage change detection
+    <main className="overflow-hidden">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <PublicHeader />
+        <section className="marketing-grid">
+          <div>
+            <p className="eyebrow text-primary mb-6 inline-flex items-center gap-2">
+              <span className="size-2 rounded-full bg-primary" />
+              Your personal radar for the web
             </p>
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl sm:leading-tight">
-              Know when the web changes.
+            <h1 className="marketing-title">
+              The web moves.
+              <br />
+              <span className="text-primary">You stay ahead.</span>
             </h1>
-            <p className="mt-5 text-base leading-relaxed text-zinc-400">
-              PageRadar monitors the webpages you rely on and surfaces every meaningful update. No noisy alerts, no scanning full pages.
+            <p className="mt-6 text-lg text-muted max-w-lg leading-relaxed">
+              Follow the pages that matter to you. PageRadar watches for
+              meaningful changes and tells you what happened, and why it
+              matters.
             </p>
-            <div className="mt-8 flex items-center gap-3">
-              <Link
-                href="/demo"
-                className="rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-950 hover:bg-zinc-200 transition"
-              >
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/register" className="btn btn-primary">
+                Start monitoring
+                <Icon name="arrow" className="size-4" />
+              </Link>
+              <Link href="/demo" className="btn">
                 Explore the demo
               </Link>
-              <Link
-                href="/register"
-                className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-4 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition"
-              >
-                Create an account
-              </Link>
             </div>
+            <p className="mt-5 text-sm text-muted">
+              Before and after evidence. Clear importance. Email alerts.
+            </p>
           </div>
-
-          {/* Simple Clean Preview Card */}
-          <div className="mt-14 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-              <div>
-                <p className="text-xs font-medium text-zinc-400">Today&apos;s updates</p>
-                <p className="text-sm font-semibold text-white">3 changes need review</p>
-              </div>
-              <span className="rounded-full border border-zinc-700 bg-zinc-800/60 px-2.5 py-0.5 text-xs text-zinc-300">
-                Live monitoring
-              </span>
-            </div>
-
-            <div className="mt-4 space-y-2.5">
-              {changes.map((item) => (
-                <div
-                  key={item.title}
-                  className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-950/60 px-4 py-3 text-sm"
-                >
-                  <div>
-                    <p className="font-medium text-white">{item.title}</p>
-                    <p className="text-xs text-zinc-400">{item.change}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-medium text-zinc-300">{item.priority}</span>
-                    <p className="text-xs text-zinc-400 font-mono mt-0.5">{item.diff}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="radar-backdrop">
+            <BriefPreview />
           </div>
         </section>
-
-        {/* Features Section */}
-        <section className="border-t border-zinc-800/80 py-16">
-          <div className="grid gap-6 md:grid-cols-3">
-            {features.map((feature) => (
-              <div key={feature.number} className="rounded-xl border border-zinc-800/80 bg-zinc-900/20 p-6">
-                <span className="text-xs font-mono font-medium text-zinc-500">{feature.number}</span>
-                <h2 className="mt-3 text-base font-semibold text-white">{feature.title}</h2>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{feature.description}</p>
-              </div>
+        <section className="border-y border-line py-10">
+          <p className="eyebrow text-center mb-6">
+            For everything you don’t want to miss
+          </p>
+          <div className="grid md:grid-cols-3 gap-8">
+            {uses.map((item) => (
+              <article key={item.title} className="flex gap-4">
+                <span className="bg-accent-soft text-primary rounded-xl p-3 h-fit">
+                  <Icon name={item.icon} />
+                </span>
+                <div>
+                  <h2 className="font-bold">{item.title}</h2>
+                  <p className="text-muted text-sm mt-2 leading-relaxed">
+                    {item.copy}
+                  </p>
+                </div>
+              </article>
             ))}
           </div>
         </section>
-
-        {/* Footer */}
-        <footer className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-zinc-800/80 py-8 text-xs text-zinc-500">
-          <p>PageRadar — Clear, quiet webpage monitoring.</p>
-          <p>© {new Date().getFullYear()} PageRadar</p>
+        <section className="py-20">
+          <div className="max-w-xl mb-10">
+            <p className="eyebrow text-primary mb-3">
+              From a webpage to a useful update
+            </p>
+            <h2 className="display text-3xl sm:text-4xl font-bold">
+              Less checking.
+              <br />
+              More knowing.
+            </h2>
+            <p className="mt-4 text-muted">
+              A page change is only useful when you understand it. PageRadar
+              connects the update to the evidence.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-5">
+            {[
+              {
+                step: "01",
+                title: "Add a page",
+                copy: "Paste a public webpage URL. Choose how often to check it and which changes you care about.",
+              },
+              {
+                step: "02",
+                title: "Understand the change",
+                copy: "See the changed section, previous and current values, importance, and a plain-language explanation.",
+              },
+              {
+                step: "03",
+                title: "Get the update",
+                copy: "Review the timeline or enable verified email alerts to receive changes that match your preferences.",
+              },
+            ].map((item) => (
+              <article key={item.step} className="panel p-7">
+                <span className="text-primary font-mono text-sm">
+                  {item.step}
+                </span>
+                <h3 className="text-xl font-bold mt-5">{item.title}</h3>
+                <p className="text-muted mt-3 text-sm leading-relaxed">
+                  {item.copy}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+        <section className="rounded-2xl bg-accent-soft p-8 sm:p-12 flex flex-wrap items-center justify-between gap-6 mb-16">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold">
+              Put your important pages on the radar.
+            </h2>
+            <p className="text-muted mt-3">
+              Start with one page. Let PageRadar keep an eye on it.
+            </p>
+          </div>
+          <Link href="/register" className="btn btn-primary">
+            Create an account
+            <Icon name="arrow" className="size-4" />
+          </Link>
+        </section>
+        <footer className="border-t border-line py-8 flex flex-wrap items-center justify-between gap-5">
+          <Brand compact />
+          <p className="text-sm text-muted">
+            Meaningful changes. Clear evidence.
+          </p>
+          <ThemeControl />
         </footer>
       </div>
     </main>
   );
 }
-

@@ -14,6 +14,7 @@ import {
   ErrorState,
   RefreshError,
 } from "@/components/common/states";
+import { Icon } from "@/components/common/Icon";
 import { WatchCard } from "@/components/watches/WatchCard";
 import { ChangeCard } from "@/components/changes/ChangeCard";
 import { friendlyErrorMessage } from "@/lib/format";
@@ -64,7 +65,7 @@ export default function DashboardPage() {
               : null,
       };
     })
-    .slice(0, 5);
+    .sort((a, b) => Number(b.importance) - Number(a.importance));
 
   const watches: Watch[] = rawWatches.map((w) => ({
     ...w,
@@ -98,7 +99,7 @@ export default function DashboardPage() {
     watches.filter((w) => w.isActive).length;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div>
       {error ? (
         <RefreshError
           onRetry={() => {
@@ -110,99 +111,147 @@ export default function DashboardPage() {
           }}
         />
       ) : null}
-      <div className="flex items-center justify-between border-b border-zinc-800/80 pb-5">
+      <div className="page-heading">
         <div>
-          <h1 className="text-xl font-semibold text-white">Dashboard</h1>
-          <p className="mt-0.5 text-xs text-zinc-400">
-            Overview of your monitored pages and recent changes.
-          </p>
+          <p className="eyebrow mb-2">Your web briefing</p>
+          <h1>Stay ahead of what changes.</h1>
+          <p>Meaningful updates from the pages you follow, in one place.</p>
         </div>
-        <Link
-          href="/watches/new"
-          className="rounded-lg bg-white px-3.5 py-2 text-xs font-medium text-zinc-950 hover:bg-zinc-200 transition focus:outline-none"
-        >
-          + Add watch
+        <Link href="/watches/new" className="btn btn-primary">
+          <Icon name="plus" />
+          Add page
         </Link>
       </div>
-
       <section
         aria-label="Summary"
-        className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+        className="panel grid grid-cols-3 mb-8 divide-x divide-line"
       >
         {[
-          { label: "Active Watches", value: activeWatches },
+          {
+            label: "Active watches",
+            value: statsQ.error ? "—" : activeWatches,
+            icon: "pages" as const,
+            note: "Pages being monitored",
+          },
           {
             label: "Changes this week",
-            value: statsQ.data?.dashboardStats.recentChanges ?? "—",
+            value: statsQ.error
+              ? "—"
+              : (statsQ.data?.dashboardStats.recentChanges ?? "—"),
+            icon: "signal" as const,
+            note: "Updates detected in the last 7 days",
           },
           {
-            label: "Important Changes",
-            value: statsQ.data?.dashboardStats.importantChanges ?? "—",
+            label: "Important changes",
+            value: statsQ.error
+              ? "—"
+              : (statsQ.data?.dashboardStats.importantChanges ?? "—"),
+            icon: "bell" as const,
+            note: "High importance updates across your history",
           },
         ].map((item) => (
-          <div
-            key={item.label}
-            className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-5"
-          >
-            <p className="text-xs font-medium text-zinc-400">{item.label}</p>
-            <p className="mt-2 text-3xl font-semibold text-white">
+          <div key={item.label} className="p-3 sm:p-6">
+            <div className="flex justify-between items-center gap-3">
+              <p className="text-xs sm:text-sm text-muted min-h-9 sm:min-h-0">
+                {item.label}
+              </p>
+              <Icon
+                name={item.icon}
+                className="text-primary size-4 hidden sm:block"
+              />
+            </div>
+            <p className="display text-2xl sm:text-3xl font-bold mt-2 tabular-nums">
               {item.value}
+            </p>
+            <p className="hidden sm:block text-xs text-muted mt-1">
+              {item.note}
             </p>
           </div>
         ))}
       </section>
-
-      <section aria-label="Recent watches" className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">Recent Watches</h2>
-          <Link
-            href="/watches"
-            className="text-xs text-zinc-400 hover:text-white transition"
-          >
-            View all →
-          </Link>
-        </div>
-        {watchesQ.loading && !watchesQ.data ? (
-          <LoadingState message="Loading watches..." />
-        ) : watches.length === 0 ? (
-          <EmptyState
-            title="No active watches."
-            description="Add a webpage to monitor it for meaningful updates."
-            action={
-              <Link
-                href="/watches/new"
-                className="inline-block rounded-lg bg-white px-3.5 py-2 text-xs font-medium text-zinc-950 hover:bg-zinc-200"
-              >
-                Add a Watch
+      <div className="briefing-grid">
+        <section aria-label="Recent changes">
+          <div className="flex items-center justify-between mb-5 gap-3">
+            <div>
+              <h2 className="text-lg font-bold">Recent updates</h2>
+              <p className="text-sm text-muted mt-1">
+                Important changes appear first.
+              </p>
+            </div>
+            <span className="badge">Latest {changes.length}</span>
+          </div>
+          {changesQ.loading && !changesQ.data ? (
+            <LoadingState message="Loading changes..." />
+          ) : changes.length === 0 ? (
+            <EmptyState
+              title="No changes detected yet."
+              description="Once your first baseline is captured, meaningful updates will appear here."
+            />
+          ) : (
+            <div className="signal-feed">
+              {changes.map((c) => (
+                <ChangeCard key={c.id} change={c} />
+              ))}
+            </div>
+          )}
+        </section>
+        <aside className="grid gap-5">
+          <section className="panel p-5" aria-label="Monitoring health">
+            <div className="flex items-center gap-2 mb-4">
+              <Icon name="signal" className="text-primary" />
+              <h2 className="font-bold">Monitoring health</h2>
+            </div>
+            <p className="text-sm text-muted">
+              Failed checks across your history
+            </p>
+            <p className="display text-3xl font-bold mt-2">
+              {statsQ.error
+                ? "—"
+                : (statsQ.data?.dashboardStats.failedChecks ?? "—")}
+            </p>
+            <p className="text-sm text-muted mt-2">
+              Open a page’s history to review failures and retry attempts.
+            </p>
+            <Link href="/watches" className="link text-sm block mt-4">
+              View monitored pages →
+            </Link>
+          </section>
+          <section aria-label="Recent watches" className="grid gap-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold">On your radar</h2>
+              <Link href="/watches" className="link text-sm">
+                View all →
               </Link>
-            }
-          />
-        ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {watches.slice(0, 4).map((w) => (
-              <WatchCard key={w.id} watch={w} />
-            ))}
+            </div>
+            {watches.length === 0 ? (
+              <EmptyState
+                title="Your radar is ready."
+                description="Add your first page to start monitoring."
+                action={
+                  <Link href="/watches/new" className="btn btn-primary">
+                    Add page
+                  </Link>
+                }
+              />
+            ) : (
+              watches.slice(0, 3).map((w) => <WatchCard key={w.id} watch={w} />)
+            )}
+          </section>
+          <div className="rounded-xl bg-accent-soft p-5">
+            <Icon name="bell" className="text-primary mb-3" />
+            <h2 className="font-bold">Updates in your inbox</h2>
+            <p className="text-sm text-muted mt-2">
+              Get important changes by email, even when you’re away.
+            </p>
+            <Link
+              href="/notifications/settings"
+              className="link text-sm block mt-3"
+            >
+              Set up email alerts →
+            </Link>
           </div>
-        )}
-      </section>
-
-      <section aria-label="Recent changes" className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold text-white">Recent Changes</h2>
-        {changesQ.loading && !changesQ.data ? (
-          <LoadingState message="Loading changes..." />
-        ) : changes.length === 0 ? (
-          <EmptyState
-            title="No changes detected yet."
-            description="When meaningful changes are detected, they will appear here."
-          />
-        ) : (
-          <div className="grid grid-cols-1 gap-3">
-            {changes.map((c) => (
-              <ChangeCard key={c.id} change={c} />
-            ))}
-          </div>
-        )}
-      </section>
+        </aside>
+      </div>
     </div>
   );
 }

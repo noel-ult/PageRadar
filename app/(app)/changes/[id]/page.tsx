@@ -41,7 +41,7 @@ export default function ChangeDetailPage({
     );
 
   return (
-    <div className="flex flex-col gap-6 max-w-3xl">
+    <div className="max-w-5xl mx-auto grid gap-6">
       {error ? (
         <RefreshError
           onRetry={() => {
@@ -51,36 +51,60 @@ export default function ChangeDetailPage({
       ) : null}
       <Link
         href={change.watch?.id ? `/watches/${change.watch.id}` : "/dashboard"}
-        className="w-fit text-xs font-medium text-zinc-400 hover:text-zinc-200 transition"
+        className="link text-sm w-fit"
       >
-        ← Back
+        ← Back to {change.watch?.name ?? "overview"}
       </Link>
-
-      <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-semibold tracking-tight text-zinc-100">
-            {formatChangeType(change.changeType)}
-          </h1>
-          <ImportanceBadge importance={change.importance} />
+      <div className="page-heading mb-0">
+        <div>
+          <p className="eyebrow mb-3">Change intelligence</p>
+          <h1>{formatChangeType(change.changeType)}</h1>
+          <p>
+            {change.watch?.name ?? "Webpage"} ·{" "}
+            {formatDateTime(change.detectedAt)}
+          </p>
         </div>
-        <dl className="mt-5 grid grid-cols-1 gap-4 text-xs sm:grid-cols-2 pt-5 border-t border-zinc-800/60">
+        <ImportanceBadge importance={change.importance} />
+      </div>
+      {change.explanation ? (
+        <section
+          aria-label="Explanation"
+          className="panel p-6 border-l-4 border-l-primary"
+        >
+          <p className="eyebrow text-primary mb-2">Why it matters</p>
+          <h2 className="sr-only">Explanation</h2>
+          <p className="text-lg leading-relaxed break-words">
+            {change.explanation}
+          </p>
+        </section>
+      ) : null}
+      <section aria-label="Change evidence" className="grid gap-4">
+        <h2 className="text-lg font-bold">What changed</h2>
+        <BeforeAfter
+          before={getBeforeValue(change)}
+          after={getAfterValue(change)}
+        />
+      </section>
+      <section aria-label="Source details" className="panel p-6">
+        <h2 className="text-lg font-bold mb-5">Source & detection details</h2>
+        <dl className="grid gap-6 text-sm sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <dt className="text-zinc-500">Webpage</dt>
-            <dd className="mt-1 font-medium text-zinc-200">
+            <dt className="text-muted">Webpage</dt>
+            <dd className="mt-1 font-semibold">
               {change.watch?.name ?? "Webpage"}
             </dd>
           </div>
-          <div>
-            <dt className="text-zinc-500">Source URL</dt>
-            <dd className="mt-1 break-all font-medium text-zinc-200">
+          <div className="sm:col-span-2">
+            <dt className="text-muted">Source URL</dt>
+            <dd className="mt-1 break-all">
               {change.watch?.url ? (
                 <a
                   href={change.watch.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-zinc-400 hover:text-zinc-200 underline transition"
+                  className="link"
                 >
-                  {change.watch.url}
+                  {change.watch.url} ↗
                 </a>
               ) : (
                 "—"
@@ -88,52 +112,25 @@ export default function ChangeDetailPage({
             </dd>
           </div>
           <div>
-            <dt className="text-zinc-500">Detected</dt>
-            <dd className="mt-1 font-medium text-zinc-200">
-              {formatDateTime(change.detectedAt)}
-            </dd>
+            <dt className="text-muted">Section</dt>
+            <dd className="mt-1 font-semibold">{change.section ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-zinc-500">Section</dt>
-            <dd className="mt-1 font-medium text-zinc-200">
-              {change.section ?? "—"}
-            </dd>
+            <dt className="text-muted">Severity</dt>
+            <dd className="mt-1 font-semibold">{change.severity}</dd>
           </div>
           <div>
-            <dt className="text-zinc-500">Severity</dt>
-            <dd className="mt-1 font-medium">{change.severity}</dd>
+            <dt className="text-muted">Page changed</dt>
+            <dd className="mt-1 font-semibold">{change.changePercentage}%</dd>
           </div>
-          <div>
-            <dt className="text-zinc-500">Page changed</dt>
-            <dd className="mt-1 font-medium">{change.changePercentage}%</dd>
-          </div>
-          <div>
-            <dt className="text-zinc-500">Affected sections</dt>
-            <dd className="mt-1 font-medium">
-              {change.affectedSections.join(", ")}
+          <div className="sm:col-span-2">
+            <dt className="text-muted">Affected sections</dt>
+            <dd className="mt-1 font-semibold break-words">
+              {change.affectedSections.join(", ") || "—"}
             </dd>
           </div>
         </dl>
-      </div>
-
-      <BeforeAfter
-        before={getBeforeValue(change)}
-        after={getAfterValue(change)}
-      />
-
-      {change.explanation ? (
-        <section
-          aria-label="Explanation"
-          className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-5"
-        >
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-            Explanation
-          </h2>
-          <p className="mt-2 text-xs text-zinc-300 leading-relaxed">
-            {change.explanation}
-          </p>
-        </section>
-      ) : null}
+      </section>
     </div>
   );
 }

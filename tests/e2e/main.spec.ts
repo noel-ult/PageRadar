@@ -257,8 +257,23 @@ test("watch preferences, async checks, edit, history, read state and delete", as
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/dashboard/);
   await expect(
-    page.getByRole("heading", { name: "Dashboard", exact: true }),
+    page.getByRole("heading", {
+      name: "Stay ahead of what changes.",
+      exact: true,
+    }),
   ).toBeVisible();
+  if ((page.viewportSize()?.width ?? 1280) < 901) {
+    const trigger = page.getByRole("button", { name: "Open navigation" });
+    await trigger.click();
+    await expect(
+      page.getByRole("dialog", { name: "Your workspace" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Close navigation" }),
+    ).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(trigger).toBeFocused();
+  }
   expect(
     (await context.cookies()).find((c) => c.name === "pageradar_session")
       ?.httpOnly,
@@ -271,6 +286,15 @@ test("watch preferences, async checks, edit, history, read state and delete", as
   await page.getByLabel("Website URL").fill(watch.url);
   await page.getByLabel("Deadline", { exact: true }).check();
   await page.getByLabel("Minimum alert importance").fill("65");
+  await page.getByRole("link", { name: "Cancel", exact: true }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Discard unsaved changes?" }),
+  ).toBeVisible();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Cancel", exact: true })
+    .click();
+  await expect(page.getByLabel("Watch name")).toHaveValue("Scholarship");
   await page.getByRole("button", { name: "Preview content" }).click();
   await expect(
     page.getByRole("region", { name: "Content preview" }),
@@ -296,7 +320,7 @@ test("watch preferences, async checks, edit, history, read state and delete", as
     page.getByRole("button", { name: "Resume", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Resume", exact: true }).click();
-  await page.getByRole("link", { name: "View details →" }).click();
+  await page.getByRole("link", { name: "View change" }).click();
   await expect(
     page.getByRole("region", { name: "After", exact: true }),
   ).toContainText("November 2");
@@ -312,6 +336,32 @@ test("watch preferences, async checks, edit, history, read state and delete", as
   await expect(
     page.getByRole("button", { name: "Mark all read" }),
   ).toBeDisabled();
+  await page.goto("/dashboard");
+  await expect(
+    page.getByRole("region", { name: "Recent changes" }),
+  ).toContainText("November 2");
+  for (const theme of ["light", "dark"]) {
+    const mobile = (page.viewportSize()?.width ?? 1280) < 901;
+    if (mobile)
+      await page.getByRole("button", { name: "Open navigation" }).click();
+    await page
+      .getByLabel("Color theme")
+      .filter({ visible: true })
+      .first()
+      .selectOption(theme);
+    if (mobile)
+      await page.getByRole("button", { name: "Close navigation" }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+    await page.screenshot({
+      path: `/tmp/pageradar-redesign-dashboard-${theme}-${test.info().project.name}.png`,
+      fullPage: true,
+    });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+  }
   await page.goto(`/watches/${watchId}`);
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();

@@ -18,7 +18,7 @@ function highlight(text: string, other: string) {
     <>
       {text.slice(0, prefix)}
       {end > prefix ? (
-        <mark className="rounded bg-teal-400/20 px-0.5 text-inherit">
+        <mark className="rounded px-0.5 text-inherit">
           {text.slice(prefix, end)}
         </mark>
       ) : null}
@@ -35,25 +35,19 @@ export function BeforeAfter({
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      <section
-        aria-label="Before"
-        className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4"
-      >
-        <h3 className="text-xs font-medium uppercase tracking-wider text-zinc-400">
+      <section aria-label="Before" className="evidence evidence-before p-5">
+        <h3 className="text-sm font-medium uppercase tracking-wider text-muted">
           Before
         </h3>
-        <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-400">
+        <p className="mt-3 whitespace-pre-wrap break-words text-base leading-relaxed text-muted">
           {highlight(before, after)}
         </p>
       </section>
-      <section
-        aria-label="After"
-        className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4"
-      >
-        <h3 className="text-xs font-medium uppercase tracking-wider text-zinc-300">
+      <section aria-label="After" className="evidence evidence-after p-5">
+        <h3 className="text-sm font-medium uppercase tracking-wider text-muted">
           After
         </h3>
-        <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-white">
+        <p className="mt-3 whitespace-pre-wrap break-words text-base leading-relaxed text-ink">
           {highlight(after, before)}
         </p>
       </section>

@@ -76,8 +76,50 @@ export default function WatchesPage() {
       />
     );
 
+  const selected = watches.find((w) => w.id === confirmId);
+  function actions(w: (typeof watches)[number]) {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <Link href={`/watches/${w.id}`} className="btn btn-sm">
+          View
+        </Link>
+        <button
+          type="button"
+          disabled={busy}
+          className="btn btn-sm"
+          onClick={() => void (w.isActive ? doPause(w.id) : doResume(w.id))}
+        >
+          {w.isActive
+            ? pauseState.loading
+              ? "Pausing..."
+              : "Pause"
+            : resumeState.loading
+              ? "Resuming..."
+              : "Resume"}
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          className="btn btn-danger btn-sm"
+          onClick={() => setConfirmId(w.id)}
+        >
+          Delete
+        </button>
+      </div>
+    );
+  }
   return (
-    <div className="flex flex-col gap-6">
+    <div>
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow mb-2">Your sources</p>
+          <h1>Monitored pages</h1>
+          <p>Manage what’s on your radar and when it gets checked.</p>
+        </div>
+        <Link href="/watches/new" className="btn btn-primary">
+          + Add page
+        </Link>
+      </div>
       {error ? (
         <RefreshError
           onRetry={() => {
@@ -85,124 +127,139 @@ export default function WatchesPage() {
           }}
         />
       ) : null}
-      <div className="flex items-center justify-between border-b border-zinc-800/80 pb-5">
-        <div>
-          <h1 className="text-xl font-semibold text-white">
-            Monitored Webpages
-          </h1>
-          <p className="mt-0.5 text-xs text-zinc-400">
-            All configured targets and check frequencies.
-          </p>
-        </div>
-        <Link
-          href="/watches/new"
-          className="rounded-lg bg-white px-3.5 py-2 text-xs font-medium text-zinc-950 hover:bg-zinc-200 transition focus:outline-none"
-        >
-          + Add watch
-        </Link>
-      </div>
-
       {actionError ? (
-        <div
+        <p
           role="alert"
-          className="rounded-lg border border-red-900/50 bg-red-950/30 p-2.5 text-xs text-red-300"
+          className="rounded-xl bg-danger-soft text-danger p-4 mb-4"
         >
           {actionError}
-        </div>
+        </p>
       ) : null}
-
       {watches.length === 0 ? (
         <EmptyState
           title="You are not monitoring any webpages yet."
-          description="Add a webpage to start watching for meaningful changes."
+          description="Add a scholarship, product, announcement, or any public webpage you want to follow."
           action={
-            <Link
-              href="/watches/new"
-              className="inline-block rounded-lg bg-white px-3.5 py-2 text-xs font-medium text-zinc-950 hover:bg-zinc-200"
-            >
-              Add a Watch
+            <Link href="/watches/new" className="btn btn-primary">
+              Add page
             </Link>
           }
         />
       ) : (
-        <ul className="flex flex-col gap-3">
-          {watches.map((w) => (
-            <li
-              key={w.id}
-              className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 transition hover:border-zinc-700"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="text-sm font-semibold text-white">{w.name}</h2>
-                  <a
-                    href={w.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block truncate text-xs text-zinc-400 hover:text-zinc-300 mt-0.5"
-                  >
-                    {w.url}
-                  </a>
-                  <p className="mt-2 text-xs text-zinc-500">
-                    Interval: Every {w.checkIntervalMinutes} min · Last checked:{" "}
-                    {formatDateTime(w.lastCheckedAt)}
-                  </p>
+        <>
+          <div className="panel overflow-hidden hidden min-[1100px]:block">
+            <table className="data-table">
+              <caption className="sr-only">
+                Monitored pages and monitoring controls
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Page</th>
+                  <th scope="col">Monitoring</th>
+                  <th scope="col">Last checked</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {watches.map((w) => (
+                  <tr key={w.id}>
+                    <td className="max-w-[260px]">
+                      <Link
+                        href={`/watches/${w.id}`}
+                        className="font-bold hover:text-primary block truncate"
+                      >
+                        {w.name}
+                      </Link>
+                      <a
+                        href={w.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-muted block truncate mt-1 hover:text-primary"
+                        title={w.url}
+                      >
+                        {w.url}
+                      </a>
+                    </td>
+                    <td>
+                      <WatchStatusBadge isActive={w.isActive} />
+                      <p className="text-xs text-muted mt-2">
+                        Every {w.checkIntervalMinutes} min
+                      </p>
+                    </td>
+                    <td className="text-xs text-muted tabular-nums">
+                      {formatDateTime(w.lastCheckedAt)}
+                    </td>
+                    <td>{actions(w)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <ul className="grid gap-4 min-[1100px]:hidden">
+            {watches.map((w) => (
+              <li key={w.id} className="panel p-5">
+                <div className="flex justify-between items-start gap-3">
+                  <div className="min-w-0">
+                    <h2 className="font-bold truncate">
+                      <Link
+                        href={`/watches/${w.id}`}
+                        className="hover:text-primary"
+                      >
+                        {w.name}
+                      </Link>
+                    </h2>
+                    <a
+                      href={w.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-muted block truncate mt-1"
+                      title={w.url}
+                    >
+                      {w.url}
+                    </a>
+                  </div>
+                  <WatchStatusBadge isActive={w.isActive} />
                 </div>
-                <WatchStatusBadge isActive={w.isActive} />
-              </div>
-              <div className="mt-3.5 flex flex-wrap gap-2">
-                <Link
-                  href={`/watches/${w.id}`}
-                  className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition focus:outline-none"
-                >
-                  View
-                </Link>
-                {w.isActive ? (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void doPause(w.id)}
-                    className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-50 transition"
-                  >
-                    {pauseState.loading ? "Pausing..." : "Pause"}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void doResume(w.id)}
-                    className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white disabled:opacity-50 transition"
-                  >
-                    {resumeState.loading ? "Resuming..." : "Resume"}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setConfirmId(w.id)}
-                  className="rounded-lg border border-red-950 bg-red-950/20 px-3 py-1.5 text-xs font-medium text-red-300 hover:bg-red-900/40 disabled:opacity-50 transition"
-                >
-                  Delete
-                </button>
-              </div>
-              <ConfirmDialog
-                open={confirmId === w.id}
-                title={`Delete ${w.name}?`}
-                description="This permanently deletes the watch and its monitoring history."
-                busy={deleteState.loading}
-                error={actionError}
-                onCancel={() => setConfirmId(null)}
-                onConfirm={() => void doDelete(w.id)}
-              />
-            </li>
-          ))}
-        </ul>
+                <dl className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted mt-4 mb-5">
+                  <div>
+                    <dt className="text-xs">Check frequency</dt>
+                    <dd className="text-ink mt-1">
+                      Every {w.checkIntervalMinutes} min
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs">Last checked</dt>
+                    <dd className="text-ink mt-1">
+                      {formatDateTime(w.lastCheckedAt)}
+                    </dd>
+                  </div>
+                </dl>
+                {actions(w)}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
-      <div className="flex gap-3">
+      <ConfirmDialog
+        open={Boolean(selected)}
+        title={`Delete ${selected?.name ?? "page"}?`}
+        description="This permanently deletes the watch and its monitoring history."
+        busy={deleteState.loading}
+        error={actionError}
+        onCancel={() => setConfirmId(null)}
+        onConfirm={() => {
+          if (confirmId) void doDelete(confirmId);
+        }}
+      />
+      <div className="flex flex-wrap items-center gap-3 mt-5">
+        <span className="text-sm text-muted">
+          {watches.length} pages on this view
+        </span>
         {after ? (
           <button
             type="button"
             onClick={() => setAfter(null)}
-            className="rounded-lg border border-zinc-700 px-3 py-2 text-xs"
+            className="btn btn-sm"
           >
             Latest watches
           </button>
@@ -210,10 +267,11 @@ export default function WatchesPage() {
         {data?.watchesPage.pageInfo.hasNextPage ? (
           <button
             type="button"
+            disabled={loading}
             onClick={() =>
               setAfter(data.watchesPage.pageInfo.endCursor ?? null)
             }
-            className="rounded-lg border border-zinc-700 px-3 py-2 text-xs"
+            className="btn btn-sm"
           >
             More watches
           </button>
