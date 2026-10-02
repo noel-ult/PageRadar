@@ -12,6 +12,10 @@ export default function EditWatchPage({
   const { id } = use(params);
   const { data, loading, error, refetch } = useQuery(WATCH_QUERY, {
     variables: { id },
+    fetchPolicy: "network-only",
+    nextFetchPolicy: "cache-first",
+    pollInterval: 0,
+    context: { backgroundRefresh: false },
   });
   if (loading) return <LoadingState message="Loading watch settings…" />;
   if (error || !data?.watch)

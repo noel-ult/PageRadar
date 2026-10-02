@@ -23,6 +23,7 @@ import {
   LoadingState,
   EmptyState,
   ErrorState,
+  RefreshError,
 } from "@/components/common/states";
 import { WatchStatusBadge } from "@/components/watches/WatchStatus";
 import { WatchTimeline } from "@/components/watches/WatchTimeline";
@@ -61,7 +62,7 @@ export default function WatchDetailPage({
     pauseS.loading || resumeS.loading || deleteS.loading || checkS.loading;
 
   if (loading && !data) return <LoadingState message="Loading watch..." />;
-  if (error || !watch)
+  if (!watch)
     return (
       <ErrorState
         message={`Unable to load this watch. ${error ? friendlyErrorMessage(error) : ""}`}
@@ -93,6 +94,13 @@ export default function WatchDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
+      {error ? (
+        <RefreshError
+          onRetry={() => {
+            void Promise.allSettled([refetch(), historyQ.refetch()]);
+          }}
+        />
+      ) : null}
       <Link
         href="/watches"
         className="w-fit text-xs font-medium text-zinc-400 hover:text-zinc-200 transition"

@@ -256,6 +256,9 @@ test("watch preferences, async checks, edit, history, read state and delete", as
   await page.getByLabel("Password", { exact: true }).fill("test-password");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/dashboard/);
+  await expect(
+    page.getByRole("heading", { name: "Dashboard", exact: true }),
+  ).toBeVisible();
   expect(
     (await context.cookies()).find((c) => c.name === "pageradar_session")
       ?.httpOnly,

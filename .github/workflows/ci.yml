@@ -41,7 +41,7 @@ jobs:
       - run: npm run typecheck && npm run lint && npm test
       - run: npm run build
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      - run: PLAYWRIGHT_PRODUCTION=1 npm run test:e2e
       - run: npm run test:full
       - run: npm run test:runtime
       - run: npm run test:load

@@ -39,6 +39,17 @@ export function getApolloClient(): ApolloClient {
   ]);
   client = new ApolloClient({
     link,
+    defaultOptions: {
+      watchQuery: {
+        fetchPolicy: "cache-and-network",
+        nextFetchPolicy: "cache-first",
+        pollInterval: 10_000,
+        notifyOnNetworkStatusChange: false,
+        skipPollAttempt: () =>
+          typeof document !== "undefined" &&
+          (document.visibilityState !== "visible" || !navigator.onLine),
+      },
+    },
     cache: new InMemoryCache({
       typePolicies: {
         Query: {

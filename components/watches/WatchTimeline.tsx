@@ -5,7 +5,11 @@ import Link from "next/link";
 import { WATCH_HISTORY_QUERY } from "@/graphql/queries";
 import { formatDateTime } from "@/lib/format";
 import { ImportanceBadge } from "@/components/changes/ImportanceBadge";
-import { EmptyState, ErrorState } from "@/components/common/states";
+import {
+  EmptyState,
+  ErrorState,
+  RefreshError,
+} from "@/components/common/states";
 const labels: Record<string, string> = {
   QUEUED: "Check queued",
   RUNNING: "Checking page",
@@ -22,7 +26,7 @@ export function WatchTimeline({ id }: { id: string }) {
     variables: { id, after },
     pollInterval: after ? 0 : 5000,
   });
-  if (error)
+  if (error && !data)
     return (
       <ErrorState
         message="Unable to load check history."
@@ -33,6 +37,13 @@ export function WatchTimeline({ id }: { id: string }) {
   return (
     <section aria-label="Monitoring timeline" className="grid gap-3">
       <h2 className="text-sm font-medium">Monitoring timeline</h2>
+      {error ? (
+        <RefreshError
+          onRetry={() => {
+            void refetch().catch(() => {});
+          }}
+        />
+      ) : null}
       {loading && !data ? (
         <p role="status" className="text-sm text-zinc-400">
           Loading history…

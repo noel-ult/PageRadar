@@ -59,3 +59,20 @@ export function ErrorState({
     </div>
   );
 }
+export function RefreshError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div
+      role="status"
+      className="flex flex-wrap items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-900/40 px-4 py-3 text-xs text-zinc-300"
+    >
+      <p>Updates are temporarily unavailable. Showing the last loaded data.</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="rounded border border-zinc-600 px-3 py-1.5 text-white hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
+      >
+        Try again
+      </button>
+    </div>
+  );
+}

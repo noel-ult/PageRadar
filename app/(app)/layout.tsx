@@ -9,7 +9,9 @@ export default function AppGroupLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { data } = useQuery<{ me: { name: string } }>(ME_QUERY);
+  const { data } = useQuery<{ me: { name: string } }>(ME_QUERY, {
+    pollInterval: 0,
+  });
   const userName = data?.me?.name;
 
   return (

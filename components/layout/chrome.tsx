@@ -12,6 +12,7 @@ import {
 } from "@/graphql/mutations";
 import { NOTIFICATIONS_QUERY } from "@/graphql/queries";
 import { formatDateTime } from "@/lib/format";
+import { RefreshError } from "@/components/common/states";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
@@ -176,7 +177,14 @@ export function NotificationBell() {
               Mark all read
             </button>
           </div>
-          {notificationError || error ? (
+          {error && data ? (
+            <RefreshError
+              onRetry={() => {
+                void refetch().catch(() => {});
+              }}
+            />
+          ) : null}
+          {notificationError || (error && !data) ? (
             <p role="alert" className="p-3 text-xs text-red-300">
               {notificationError ?? "Unable to load alerts. Try again."}
             </p>
@@ -187,7 +195,7 @@ export function NotificationBell() {
             </p>
           ) : null}
           <div className="max-h-80 overflow-y-auto divide-y divide-zinc-900">
-            {notifications.length === 0 ? (
+            {data && notifications.length === 0 ? (
               <div className="p-6 text-center text-xs text-zinc-500">
                 No notifications yet. You will be alerted when monitored pages
                 change.

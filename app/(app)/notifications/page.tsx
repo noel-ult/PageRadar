@@ -9,6 +9,7 @@ import {
   LoadingState,
   EmptyState,
   ErrorState,
+  RefreshError,
 } from "@/components/common/states";
 export default function NotificationsPage() {
   const [after, setAfter] = useState<string | null>(null);
@@ -20,7 +21,7 @@ export default function NotificationsPage() {
   const [markRead, markState] = useMutation(MARK_NOTIFICATION_READ_MUTATION);
   if (loading && !data)
     return <LoadingState message="Loading notifications…" />;
-  if (error)
+  if (error && !data)
     return (
       <ErrorState
         message="Unable to load notifications."
@@ -31,6 +32,13 @@ export default function NotificationsPage() {
   return (
     <div className="grid gap-6">
       <h1 className="text-xl font-semibold">Notifications</h1>
+      {error ? (
+        <RefreshError
+          onRetry={() => {
+            void refetch().catch(() => {});
+          }}
+        />
+      ) : null}
       {actionError ? (
         <p role="alert" className="text-sm text-red-300">
           {actionError}

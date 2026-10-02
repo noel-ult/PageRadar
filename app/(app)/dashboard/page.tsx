@@ -12,6 +12,7 @@ import {
   LoadingState,
   EmptyState,
   ErrorState,
+  RefreshError,
 } from "@/components/common/states";
 import { WatchCard } from "@/components/watches/WatchCard";
 import { ChangeCard } from "@/components/changes/ChangeCard";
@@ -98,6 +99,17 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
+      {error ? (
+        <RefreshError
+          onRetry={() => {
+            void Promise.allSettled([
+              statsQ.refetch(),
+              watchesQ.refetch(),
+              changesQ.refetch(),
+            ]);
+          }}
+        />
+      ) : null}
       <div className="flex items-center justify-between border-b border-zinc-800/80 pb-5">
         <div>
           <h1 className="text-xl font-semibold text-white">Dashboard</h1>
@@ -150,7 +162,7 @@ export default function DashboardPage() {
             View all →
           </Link>
         </div>
-        {watchesQ.loading && watches.length === 0 ? (
+        {watchesQ.loading && !watchesQ.data ? (
           <LoadingState message="Loading watches..." />
         ) : watches.length === 0 ? (
           <EmptyState
@@ -176,7 +188,7 @@ export default function DashboardPage() {
 
       <section aria-label="Recent changes" className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold text-white">Recent Changes</h2>
-        {changesQ.loading && changes.length === 0 ? (
+        {changesQ.loading && !changesQ.data ? (
           <LoadingState message="Loading changes..." />
         ) : changes.length === 0 ? (
           <EmptyState

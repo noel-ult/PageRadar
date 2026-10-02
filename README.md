@@ -109,6 +109,7 @@ npm run graphql:generate
 npm run build
 npx playwright install chromium
 npm run test:e2e           # desktop/mobile interaction and failure paths
+PLAYWRIGHT_PRODUCTION=1 npm run test:e2e # after build:web; standalone production UI
 npm run test:integration   # isolated real PostgreSQL, Redis, HTTP fixture, API and worker
 npm run test:full          # integration plus real browser login/monitoring/alert flow
 npm run test:runtime       # independent API/scheduler/worker readiness

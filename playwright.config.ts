@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+const production = process.env.PLAYWRIGHT_PRODUCTION === "1";
 export default defineConfig({
   testDir: "./tests/e2e",
   testIgnore: "**/real.spec.ts",
@@ -16,9 +17,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev -- --port 3100 --webpack",
+    command: production
+      ? "node scripts/start-browser-test.mjs"
+      : "npm run dev -- --port 3100 --webpack",
     url: "http://localhost:3100",
     reuseExistingServer: !process.env.CI,
-    env: { PAGERADAR_DIST_DIR: ".next-e2e" },
+    env: production
+      ? { NODE_ENV: "production", PORT: "3100", HOSTNAME: "127.0.0.1" }
+      : { PAGERADAR_DIST_DIR: ".next-e2e" },
   },
 });

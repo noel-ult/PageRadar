@@ -12,7 +12,11 @@ import {
   getAfterValue,
   getBeforeValue,
 } from "@/lib/format";
-import { LoadingState, ErrorState } from "@/components/common/states";
+import {
+  LoadingState,
+  ErrorState,
+  RefreshError,
+} from "@/components/common/states";
 import { ImportanceBadge } from "@/components/changes/ImportanceBadge";
 import { BeforeAfter } from "@/components/changes/BeforeAfter";
 
@@ -26,9 +30,9 @@ export default function ChangeDetailPage({
     variables: { id },
   });
 
-  if (loading) return <LoadingState message="Loading change..." />;
+  if (loading && !data) return <LoadingState message="Loading change..." />;
   const change = data?.change;
-  if (error || !change)
+  if (!change)
     return (
       <ErrorState
         message={`Unable to load this change. ${error ? friendlyErrorMessage(error) : ""}`}
@@ -38,6 +42,13 @@ export default function ChangeDetailPage({
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
+      {error ? (
+        <RefreshError
+          onRetry={() => {
+            void refetch().catch(() => {});
+          }}
+        />
+      ) : null}
       <Link
         href={change.watch?.id ? `/watches/${change.watch.id}` : "/dashboard"}
         className="w-fit text-xs font-medium text-zinc-400 hover:text-zinc-200 transition"
