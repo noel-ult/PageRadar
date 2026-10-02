@@ -8,7 +8,7 @@ test("public redesign, theme persistence, device changes and sample evidence", a
   await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "The web moves. You stay ahead." }),
+    page.getByRole("heading", { name: "Your internet. In focus." }),
   ).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   const theme = page
@@ -18,6 +18,7 @@ test("public redesign, theme persistence, device changes and sample evidence", a
   await theme.selectOption("dark");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.screenshot({
+    animations: "disabled",
     path: `/tmp/pageradar-redesign-home-dark-${test.info().project.name}.png`,
     fullPage: true,
   });
@@ -40,6 +41,7 @@ test("public redesign, theme persistence, device changes and sample evidence", a
     .first()
     .selectOption("light");
   await page.screenshot({
+    animations: "disabled",
     path: `/tmp/pageradar-redesign-home-light-${test.info().project.name}.png`,
     fullPage: true,
   });
@@ -57,6 +59,7 @@ test("public redesign, theme persistence, device changes and sample evidence", a
     page.getByRole("button", { name: /Price change Pro plan pricing/ }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.screenshot({
+    animations: "disabled",
     path: `/tmp/pageradar-redesign-demo-${test.info().project.name}.png`,
     fullPage: true,
   });
@@ -102,6 +105,7 @@ test("authentication masks passwords, supports keyboard and keeps theme", async 
     "true",
   );
   await page.screenshot({
+    animations: "disabled",
     path: `/tmp/pageradar-redesign-login-${test.info().project.name}.png`,
     fullPage: true,
   });

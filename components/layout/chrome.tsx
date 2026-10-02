@@ -94,15 +94,11 @@ export function Sidebar() {
       <p className="eyebrow px-3 mt-12 mb-3">Workspace</p>
       <Navigation />
       <div className="mt-auto pt-8">
-        <div className="rounded-xl bg-accent-soft p-4 mb-4">
-          <Icon name="signal" className="text-primary mb-2" />
-          <p className="text-sm font-semibold">Keep the web in view.</p>
-          <p className="text-sm text-muted mt-1">
-            Follow the pages that matter. Let the updates come to you.
+        <div className="border-t border-line pt-5 px-3 mb-5">
+          <Icon name="signal" className="text-primary mb-3" />
+          <p className="text-sm text-muted">
+            Monitoring the web for what matters to you.
           </p>
-          <Link href="/watches/new" className="link text-sm block mt-3">
-            Add a page →
-          </Link>
         </div>
         <SignOut />
       </div>

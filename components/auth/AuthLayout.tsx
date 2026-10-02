@@ -1,6 +1,6 @@
 import { Brand } from "@/components/common/Brand";
 import { ThemeControl } from "@/components/common/ThemeControl";
-import { BriefPreview } from "@/components/changes/BriefPreview";
+import { RadarScope } from "@/components/common/RadarScope";
 export function AuthLayout({
   title,
   description,
@@ -15,17 +15,17 @@ export function AuthLayout({
       <aside className="auth-story">
         <Brand />
         <div className="max-w-lg py-12">
-          <p className="eyebrow text-primary mb-4">Your personal web radar</p>
-          <h2 className="text-4xl xl:text-5xl font-bold leading-tight mb-5">
-            The next important update.
+          <h2>
+            The web never
             <br />
-            Already on your radar.
+            stands still.
+            <br />
+            <span className="text-primary">Stay in the know.</span>
           </h2>
-          <p className="text-muted mb-8 text-lg">
-            Deadlines, opportunities, prices, and announcements. Know what
-            changed without checking every page.
+          <RadarScope />
+          <p className="text-muted text-lg max-w-sm">
+            Your pages. Your priorities. Meaningful updates, all in one place.
           </p>
-          <BriefPreview />
         </div>
         <p className="text-sm text-muted">
           Watch the web. Understand the change.
@@ -41,7 +41,7 @@ export function AuthLayout({
               <ThemeControl />
             </div>
           </div>
-          <p className="eyebrow text-primary mb-3">Welcome to PageRadar</p>
+
           <h1 className="text-3xl font-bold">{title}</h1>
           <p className="mt-3 text-muted mb-8">{description}</p>
           {children}

@@ -258,7 +258,7 @@ test("watch preferences, async checks, edit, history, read state and delete", as
   await expect(page).toHaveURL(/dashboard/);
   await expect(
     page.getByRole("heading", {
-      name: "Stay ahead of what changes.",
+      name: "Your internet. In focus.",
       exact: true,
     }),
   ).toBeVisible();
@@ -325,6 +325,7 @@ test("watch preferences, async checks, edit, history, read state and delete", as
     page.getByRole("region", { name: "After", exact: true }),
   ).toContainText("November 2");
   await page.screenshot({
+    animations: "disabled",
     path: `/tmp/pageradar-${test.info().project.name}.png`,
     fullPage: true,
   });
@@ -353,6 +354,7 @@ test("watch preferences, async checks, edit, history, read state and delete", as
       await page.getByRole("button", { name: "Close navigation" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
     await page.screenshot({
+      animations: "disabled",
       path: `/tmp/pageradar-redesign-dashboard-${theme}-${test.info().project.name}.png`,
       fullPage: true,
     });

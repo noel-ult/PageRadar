@@ -15,6 +15,7 @@ import {
   RefreshError,
 } from "@/components/common/states";
 import { Icon } from "@/components/common/Icon";
+import { RadarScope } from "@/components/common/RadarScope";
 import { WatchCard } from "@/components/watches/WatchCard";
 import { ChangeCard } from "@/components/changes/ChangeCard";
 import { friendlyErrorMessage } from "@/lib/format";
@@ -111,10 +112,11 @@ export default function DashboardPage() {
           }}
         />
       ) : null}
-      <div className="page-heading">
+      <div className="page-heading dashboard-heading">
         <div>
-          <p className="eyebrow mb-2">Your web briefing</p>
-          <h1>Stay ahead of what changes.</h1>
+          <h1>
+            Your internet. <span className="text-primary">In focus.</span>
+          </h1>
           <p>Meaningful updates from the pages you follow, in one place.</p>
         </div>
         <Link href="/watches/new" className="btn btn-primary">
@@ -122,53 +124,6 @@ export default function DashboardPage() {
           Add page
         </Link>
       </div>
-      <section
-        aria-label="Summary"
-        className="panel grid grid-cols-3 mb-8 divide-x divide-line"
-      >
-        {[
-          {
-            label: "Active watches",
-            value: statsQ.error ? "—" : activeWatches,
-            icon: "pages" as const,
-            note: "Pages being monitored",
-          },
-          {
-            label: "Changes this week",
-            value: statsQ.error
-              ? "—"
-              : (statsQ.data?.dashboardStats.recentChanges ?? "—"),
-            icon: "signal" as const,
-            note: "Updates detected in the last 7 days",
-          },
-          {
-            label: "Important changes",
-            value: statsQ.error
-              ? "—"
-              : (statsQ.data?.dashboardStats.importantChanges ?? "—"),
-            icon: "bell" as const,
-            note: "High importance updates across your history",
-          },
-        ].map((item) => (
-          <div key={item.label} className="p-3 sm:p-6">
-            <div className="flex justify-between items-center gap-3">
-              <p className="text-xs sm:text-sm text-muted min-h-9 sm:min-h-0">
-                {item.label}
-              </p>
-              <Icon
-                name={item.icon}
-                className="text-primary size-4 hidden sm:block"
-              />
-            </div>
-            <p className="display text-2xl sm:text-3xl font-bold mt-2 tabular-nums">
-              {item.value}
-            </p>
-            <p className="hidden sm:block text-xs text-muted mt-1">
-              {item.note}
-            </p>
-          </div>
-        ))}
-      </section>
       <div className="briefing-grid">
         <section aria-label="Recent changes">
           <div className="flex items-center justify-between mb-5 gap-3">
@@ -196,61 +151,90 @@ export default function DashboardPage() {
           )}
         </section>
         <aside className="grid gap-5">
-          <section className="panel p-5" aria-label="Monitoring health">
-            <div className="flex items-center gap-2 mb-4">
-              <Icon name="signal" className="text-primary" />
-              <h2 className="font-bold">Monitoring health</h2>
+          <section className="monitoring-summary" aria-label="Summary">
+            <h2 className="text-xl font-bold">Your monitoring</h2>
+            <div className="monitoring-visual">
+              <RadarScope />
+              <dl>
+                {[
+                  ["Active watches", statsQ.error ? "—" : activeWatches],
+                  [
+                    "Changes this week",
+                    statsQ.error
+                      ? "—"
+                      : (statsQ.data?.dashboardStats.recentChanges ?? "—"),
+                  ],
+                  [
+                    "Important changes",
+                    statsQ.error
+                      ? "—"
+                      : (statsQ.data?.dashboardStats.importantChanges ?? "—"),
+                  ],
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <dd>{value}</dd>
+                    <dt>{label}</dt>
+                  </div>
+                ))}
+              </dl>
             </div>
-            <p className="text-sm text-muted">
-              Failed checks across your history
+            <p className="text-xs text-muted mt-4">
+              Weekly changes cover the last 7 days. Important changes include
+              all history.
             </p>
-            <p className="display text-3xl font-bold mt-2">
-              {statsQ.error
-                ? "—"
-                : (statsQ.data?.dashboardStats.failedChecks ?? "—")}
+          </section>
+          <section className="monitoring-health" aria-label="Monitoring health">
+            <div className="flex justify-between items-center gap-4">
+              <h2 className="font-bold">Failed checks</h2>
+              <span className="text-xl font-bold">
+                {statsQ.error
+                  ? "—"
+                  : (statsQ.data?.dashboardStats.failedChecks ?? "—")}
+              </span>
+            </div>
+            <p className="text-xs text-muted mt-1">
+              Across your monitoring history
             </p>
-            <p className="text-sm text-muted mt-2">
-              Open a page’s history to review failures and retry attempts.
-            </p>
-            <Link href="/watches" className="link text-sm block mt-4">
-              View monitored pages →
+            <Link href="/watches" className="link text-sm block mt-3">
+              Review monitored pages →
             </Link>
           </section>
-          <section aria-label="Recent watches" className="grid gap-3">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold">On your radar</h2>
-              <Link href="/watches" className="link text-sm">
-                View all →
-              </Link>
-            </div>
-            {watches.length === 0 ? (
-              <EmptyState
-                title="Your radar is ready."
-                description="Add your first page to start monitoring."
-                action={
-                  <Link href="/watches/new" className="btn btn-primary">
-                    Add page
-                  </Link>
-                }
-              />
-            ) : (
-              watches.slice(0, 3).map((w) => <WatchCard key={w.id} watch={w} />)
-            )}
-          </section>
-          <div className="rounded-xl bg-accent-soft p-5">
-            <Icon name="bell" className="text-primary mb-3" />
-            <h2 className="font-bold">Updates in your inbox</h2>
-            <p className="text-sm text-muted mt-2">
-              Get important changes by email, even when you’re away.
-            </p>
-            <Link
-              href="/notifications/settings"
-              className="link text-sm block mt-3"
-            >
-              Set up email alerts →
+          <Link href="/notifications/settings" className="email-shortcut">
+            <Icon name="bell" />
+            <span>
+              <strong className="block">Take updates with you.</strong>
+              <span className="text-sm text-muted">Set up email alerts →</span>
+            </span>
+          </Link>
+        </aside>
+      </div>
+      <div className="dashboard-watches">
+        {" "}
+        <section aria-label="Recent watches" className="grid gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold">On your radar</h2>
+            <Link href="/watches" className="link text-sm">
+              View all →
             </Link>
           </div>
-        </aside>
+          {watches.length === 0 ? (
+            <EmptyState
+              title="Your radar is ready."
+              description="Add your first page to start monitoring."
+              action={
+                <Link href="/watches/new" className="btn btn-primary">
+                  Add page
+                </Link>
+              }
+            />
+          ) : (
+            <div className="watch-strip">
+              {watches.slice(0, 3).map((w) => (
+                <WatchCard key={w.id} watch={w} />
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

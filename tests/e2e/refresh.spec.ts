@@ -237,7 +237,7 @@ test("refreshing an already loaded empty dashboard does not flash a loader", asy
   await page.goto("/dashboard");
   await expect(
     page.getByRole("heading", {
-      name: "Stay ahead of what changes.",
+      name: "Your internet. In focus.",
       exact: true,
     }),
   ).toBeVisible();
@@ -253,7 +253,7 @@ test("refreshing an already loaded empty dashboard does not flash a loader", asy
   await expect(page.getByText("Loading watches...")).not.toBeVisible();
   await expect(
     page.getByRole("heading", {
-      name: "Stay ahead of what changes.",
+      name: "Your internet. In focus.",
       exact: true,
     }),
   ).toBeVisible();

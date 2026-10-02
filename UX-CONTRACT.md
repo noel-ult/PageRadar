@@ -46,3 +46,5 @@ Monitored pages use server cursor pagination. Desktop tables and mobile cards sh
 The mobile navigation uses a native modal dialog: focus remains inside, Escape closes, and closing restores the navigation trigger. Theme selects deliberately retain native platform popup behavior. Global theme initialization precedes paint; changing the device preference updates System mode only. Theme preference is independent of authentication.
 
 WatchForm tracks unsaved preferences. In-app links open the shared confirmation dialog with a Discard changes action; Cancel keeps all values. Successful saves permit their established destination. A beforeunload guard covers tab close/reload. Browser history navigation is not intercepted by this link guard. Native browser lifecycle confirmation is used only for actual unload.
+
+Radar studio visual revision: RadarScope is decorative and aria-hidden. It never implies a running job, health status, or actual page position. Summary totals retain their original API meaning. Existing form, theme, pagination, notification, and unsaved-change contracts are preserved.

@@ -7,7 +7,7 @@ export function RadarMark({ className = "" }: { className?: string }) {
       aria-hidden="true"
       className={`radar-mark ${className}`}
     >
-      <rect width="40" height="40" rx="12" fill="currentColor" />
+      <rect width="40" height="40" rx="20" fill="currentColor" />
       <g stroke="var(--on-primary)" strokeWidth="1.5">
         <circle cx="20" cy="20" r="12" opacity=".45" />
         <circle cx="20" cy="20" r="7" opacity=".7" />
@@ -35,7 +35,8 @@ export function Brand({
     <Link href={href} className="brand" aria-label="PageRadar home">
       <RadarMark />
       <span>
-        PageRadar{!compact ? <small>CHANGE INTELLIGENCE</small> : null}
+        Page<span className="text-primary">Radar</span>
+        {!compact ? <small>CHANGE INTELLIGENCE</small> : null}
       </span>
     </Link>
   );
