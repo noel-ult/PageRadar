@@ -1,9 +1,16 @@
-import { Field, ID, Int, ObjectType, registerEnumType } from '@nestjs/graphql';
-import { ChangeType } from '@prisma/client';
-import { GraphQLISODateTime } from '@nestjs/graphql';
-import { WatchModel } from '../../watches/models/watch.model';
+import {
+  Field,
+  ID,
+  Int,
+  Float,
+  ObjectType,
+  registerEnumType,
+} from "@nestjs/graphql";
+import { ChangeType } from "@prisma/client";
+import { GraphQLISODateTime } from "@nestjs/graphql";
+import { WatchModel } from "../../watches/models/watch.model";
 
-registerEnumType(ChangeType, { name: 'ChangeType' });
+registerEnumType(ChangeType, { name: "ChangeType" });
 
 @ObjectType()
 export class ChangeModel {
@@ -15,6 +22,11 @@ export class ChangeModel {
   @Field(() => String, { nullable: true }) section!: string | null;
   @Field(() => Int) importance!: number;
   @Field(() => String, { nullable: true }) reason!: string | null;
+  @Field() severity!: string;
+  @Field(() => Float) confidence!: number;
+  @Field() isMeaningful!: boolean;
+  @Field(() => Float) changePercentage!: number;
+  @Field(() => [String]) affectedSections!: string[];
   @Field(() => GraphQLISODateTime) detectedAt!: Date;
   @Field(() => WatchModel, { nullable: true }) watch?: WatchModel | null;
 }

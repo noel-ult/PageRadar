@@ -4,7 +4,7 @@ import { use } from "react";
 import Link from "next/link";
 import { useQuery } from "@apollo/client/react";
 import { CHANGE_QUERY } from "@/graphql/queries";
-import type { ChangeDetail } from "@/lib/types";
+
 import {
   formatChangeType,
   formatDateTime,
@@ -27,8 +27,7 @@ export default function ChangeDetailPage({
   });
 
   if (loading) return <LoadingState message="Loading change..." />;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const change: ChangeDetail | undefined = (data as any)?.change;
+  const change = data?.change;
   if (error || !change)
     return (
       <ErrorState
@@ -56,7 +55,9 @@ export default function ChangeDetailPage({
         <dl className="mt-5 grid grid-cols-1 gap-4 text-xs sm:grid-cols-2 pt-5 border-t border-zinc-800/60">
           <div>
             <dt className="text-zinc-500">Webpage</dt>
-            <dd className="mt-1 font-medium text-zinc-200">{change.watch?.name ?? "Webpage"}</dd>
+            <dd className="mt-1 font-medium text-zinc-200">
+              {change.watch?.name ?? "Webpage"}
+            </dd>
           </div>
           <div>
             <dt className="text-zinc-500">Source URL</dt>
@@ -77,23 +78,46 @@ export default function ChangeDetailPage({
           </div>
           <div>
             <dt className="text-zinc-500">Detected</dt>
-            <dd className="mt-1 font-medium text-zinc-200">{formatDateTime(change.detectedAt)}</dd>
+            <dd className="mt-1 font-medium text-zinc-200">
+              {formatDateTime(change.detectedAt)}
+            </dd>
           </div>
           <div>
             <dt className="text-zinc-500">Section</dt>
-            <dd className="mt-1 font-medium text-zinc-200">{change.section ?? "—"}</dd>
+            <dd className="mt-1 font-medium text-zinc-200">
+              {change.section ?? "—"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-zinc-500">Severity</dt>
+            <dd className="mt-1 font-medium">{change.severity}</dd>
+          </div>
+          <div>
+            <dt className="text-zinc-500">Page changed</dt>
+            <dd className="mt-1 font-medium">{change.changePercentage}%</dd>
+          </div>
+          <div>
+            <dt className="text-zinc-500">Affected sections</dt>
+            <dd className="mt-1 font-medium">
+              {change.affectedSections.join(", ")}
+            </dd>
           </div>
         </dl>
       </div>
 
-      <BeforeAfter before={getBeforeValue(change)} after={getAfterValue(change)} />
+      <BeforeAfter
+        before={getBeforeValue(change)}
+        after={getAfterValue(change)}
+      />
 
       {change.explanation ? (
         <section
           aria-label="Explanation"
           className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-5"
         >
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Explanation</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+            Explanation
+          </h2>
           <p className="mt-2 text-xs text-zinc-300 leading-relaxed">
             {change.explanation}
           </p>
@@ -102,4 +126,3 @@ export default function ChangeDetailPage({
     </div>
   );
 }
-

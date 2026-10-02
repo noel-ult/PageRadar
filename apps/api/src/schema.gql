@@ -1,66 +1,8 @@
-# ------------------------------------------------------
-# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
-# ------------------------------------------------------
-
-type AuthPayload {
-  accessToken: String!
-  user: UserModel!
-}
-
-input ChangeFilterInput {
-  from: String
-  importance: Int
-  to: String
-  type: ChangeType
-  watchId: ID
-}
-
-type ChangeModel {
-  detectedAt: DateTime!
+type UserModel {
   id: ID!
-  importance: Int!
-  newValue: String
-  oldValue: String
-  reason: String
-  section: String
-  type: ChangeType!
-  watch: WatchModel
-  watchId: ID!
-}
-
-enum ChangeType {
-  CONTENT_CHANGED
-  DEADLINE_CHANGED
-  ELIGIBILITY_CHANGED
-  LINK_CHANGED
-  PRICE_CHANGED
-  REQUIREMENT_CHANGED
-  SECTION_CHANGED
-  STATUS_CHANGED
-}
-
-type CheckRunModel {
-  completedAt: DateTime
-  error: String
-  id: ID!
-  startedAt: DateTime!
-  status: CheckRunStatus!
-  watchId: ID!
-}
-
-enum CheckRunStatus {
-  CHANGE_DETECTED
-  FAILED
-  NO_CHANGE
-  QUEUED
-  RUNNING
-  SUCCESS
-}
-
-input CreateWatchInput {
-  checkInterval: Int!
-  title: String!
-  url: String!
+  name: String!
+  email: String!
+  createdAt: DateTime!
 }
 
 """
@@ -68,18 +10,219 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-input InterestInput {
-  enabled: Boolean!
-  type: InterestType!
+type AuthPayload {
+  accessToken: String!
+  user: UserModel!
+}
+
+type ChangeModel {
+  id: ID!
+  watchId: ID!
+  type: ChangeType!
+  oldValue: String
+  newValue: String
+  section: String
+  importance: Int!
+  reason: String
+  severity: String!
+  confidence: Float!
+  isMeaningful: Boolean!
+  changePercentage: Float!
+  affectedSections: [String!]!
+  detectedAt: DateTime!
+  watch: WatchModel
+}
+
+enum ChangeType {
+  DEADLINE_CHANGED
+  ELIGIBILITY_CHANGED
+  STATUS_CHANGED
+  REQUIREMENT_CHANGED
+  PRICE_CHANGED
+  LINK_CHANGED
+  SECTION_CHANGED
+  CONTENT_CHANGED
+  ANNOUNCEMENT_ADDED
+  DOCUMENT_ADDED
+}
+
+type WatchModel {
+  id: ID!
+  url: String!
+  title: String!
+  checkInterval: Int!
+  interests: [InterestType!]!
+  minimumImportance: Int!
+  emailEnabled: Boolean!
+  includeSelector: String
+  excludeSelector: String
+  nextCheckAt: DateTime!
+  isActive: Boolean!
+  lastCheckedAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  latestChange: ChangeModel
 }
 
 enum InterestType {
   DEADLINE
   ELIGIBILITY
-  LINK
-  PRICE
-  REQUIREMENT
   STATUS
+  REQUIREMENT
+  PRICE
+  LINK
+  ANNOUNCEMENT
+  DOCUMENT
+}
+
+type DashboardStatsModel {
+  activeWatches: Int!
+  totalWatches: Int!
+  recentChanges: Int!
+  importantChanges: Int!
+  failedChecks: Int!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  endCursor: String
+}
+
+type WatchConnection {
+  nodes: [WatchModel!]!
+  pageInfo: PageInfo!
+}
+
+type ChangeConnection {
+  nodes: [ChangeModel!]!
+  pageInfo: PageInfo!
+}
+
+type SnapshotModel {
+  id: ID!
+  contentHash: String!
+  capturedAt: DateTime!
+}
+
+type SnapshotConnection {
+  nodes: [SnapshotModel!]!
+  pageInfo: PageInfo!
+}
+
+type UserInterestModel {
+  id: ID!
+  type: InterestType!
+  enabled: Boolean!
+}
+
+type NotificationModel {
+  id: ID!
+  changeId: ID
+  channel: NotificationChannel!
+  status: NotificationStatus!
+  readAt: DateTime
+  message: String!
+  sentAt: DateTime
+  createdAt: DateTime!
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  ACCEPTED
+  DELIVERED
+  DISABLED
+}
+
+type NotificationConnection {
+  nodes: [NotificationModel!]!
+  pageInfo: PageInfo!
+}
+
+type CheckRunModel {
+  id: ID!
+  changes: [ChangeModel!]!
+  attempts: Int!
+  nextAttemptAt: DateTime!
+  watchId: ID!
+  status: CheckRunStatus!
+  startedAt: DateTime!
+  completedAt: DateTime
+  error: String
+}
+
+enum CheckRunStatus {
+  QUEUED
+  RUNNING
+  RETRYING
+  CANCELLED
+  SUCCESS
+  NO_CHANGE
+  CHANGE_DETECTED
+  FAILED
+}
+
+type CheckRunConnection {
+  nodes: [CheckRunModel!]!
+  pageInfo: PageInfo!
+}
+
+type ContentPreview {
+  text: String!
+  sections: [String!]!
+}
+
+type Query {
+  me: UserModel!
+  watches: [WatchModel!]!
+  watch(id: ID!): WatchModel
+  watchesPage(first: Int! = 25, after: String): WatchConnection!
+  dashboardStats: DashboardStatsModel!
+  changes(filter: ChangeFilterInput): [ChangeModel!]!
+  changesPage(first: Int! = 25, after: String, filter: ChangeFilterInput): ChangeConnection!
+  change(id: ID!): ChangeModel
+  snapshots(watchId: ID!): [SnapshotModel!]!
+  snapshotsPage(first: Int! = 25, after: String, watchId: ID!): SnapshotConnection!
+  userInterests: [UserInterestModel!]!
+  notifications: [NotificationModel!]!
+  unreadNotificationCount: Int!
+  notificationsPage(first: Int! = 25, after: String): NotificationConnection!
+  checkRun(id: ID!): CheckRunModel!
+  checkRuns(first: Int! = 25, after: String, watchId: ID!): CheckRunConnection!
+}
+
+input ChangeFilterInput {
+  watchId: ID
+  type: ChangeType
+  importance: Int
+  from: String
+  to: String
+}
+
+type Mutation {
+  register(input: RegisterInput!): AuthPayload!
+  login(input: LoginInput!): AuthPayload!
+  createWatch(input: CreateWatchInput!): WatchModel!
+  updateWatch(id: ID!, input: UpdateWatchInput!): WatchModel!
+  deleteWatch(id: ID!): Boolean!
+  toggleWatch(id: ID!, isActive: Boolean!): WatchModel!
+  updateInterests(inputs: [InterestInput!]!): [UserInterestModel!]!
+  markNotificationRead(id: ID!): Boolean!
+  markAllNotificationsRead: Boolean!
+  checkWatchNow(id: ID!): CheckRunModel!
+  previewWatch(input: CreateWatchInput!): ContentPreview!
+}
+
+input RegisterInput {
+  name: String!
+  email: String!
+  password: String!
 }
 
 input LoginInput {
@@ -87,87 +230,29 @@ input LoginInput {
   password: String!
 }
 
-type Mutation {
-  checkWatchNow(id: ID!): CheckRunModel!
-  createWatch(input: CreateWatchInput!): WatchModel!
-  deleteWatch(id: ID!): Boolean!
-  login(input: LoginInput!): AuthPayload!
-  register(input: RegisterInput!): AuthPayload!
-  toggleWatch(id: ID!, isActive: Boolean!): WatchModel!
-  updateInterests(inputs: [InterestInput!]!): [UserInterestModel!]!
-  updateWatch(id: ID!, input: UpdateWatchInput!): WatchModel!
-}
-
-enum NotificationChannel {
-  EMAIL
-}
-
-type NotificationModel {
-  changeId: ID
-  channel: NotificationChannel!
-  createdAt: DateTime!
-  id: ID!
-  message: String!
-  sentAt: DateTime
-  status: NotificationStatus!
-}
-
-enum NotificationStatus {
-  FAILED
-  PENDING
-  SENT
-}
-
-type Query {
-  change(id: ID!): ChangeModel
-  changes(filter: ChangeFilterInput): [ChangeModel!]!
-  me: UserModel!
-  notifications: [NotificationModel!]!
-  snapshots(watchId: ID!): [SnapshotModel!]!
-  userInterests: [UserInterestModel!]!
-  watch(id: ID!): WatchModel
-  watches: [WatchModel!]!
-}
-
-input RegisterInput {
-  email: String!
-  name: String!
-  password: String!
-}
-
-type SnapshotModel {
-  capturedAt: DateTime!
-  contentHash: String!
-  id: ID!
+input CreateWatchInput {
+  url: String!
+  title: String!
+  checkInterval: Int!
+  interests: [InterestType!]
+  minimumImportance: Int
+  emailEnabled: Boolean
+  includeSelector: String
+  excludeSelector: String
 }
 
 input UpdateWatchInput {
-  checkInterval: Int
-  title: String
   url: String
+  title: String
+  checkInterval: Int
+  interests: [InterestType!]
+  minimumImportance: Int
+  emailEnabled: Boolean
+  includeSelector: String
+  excludeSelector: String
 }
 
-type UserInterestModel {
-  enabled: Boolean!
-  id: ID!
+input InterestInput {
   type: InterestType!
-}
-
-type UserModel {
-  createdAt: DateTime!
-  email: String!
-  id: ID!
-  name: String!
-}
-
-type WatchModel {
-  checkInterval: Int!
-  createdAt: DateTime!
-  id: ID!
-  isActive: Boolean!
-  lastCheckedAt: DateTime
-  latestChange: ChangeModel
-  title: String!
-  updatedAt: DateTime!
-  url: String!
+  enabled: Boolean!
 }

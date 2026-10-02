@@ -1,0 +1,17 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["app", "components"],
+  "locale": "en",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Form", "Scrollbar", "CRUD"],
+  "requiredCommands": ["typecheck", "unit", "e2e"],
+  "commands": {
+    "typecheck": "npm run typecheck",
+    "unit": "npm test",
+    "e2e": "npm run test:e2e"
+  },
+  "evidence": {
+    "crudFullFlow": "tests/e2e/main.spec.ts",
+    "failurePaths": "tests/e2e/main.spec.ts"
+  }
+}

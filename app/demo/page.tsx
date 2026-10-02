@@ -5,12 +5,6 @@ import { useMemo, useState } from "react";
 
 type Priority = "High" | "Medium" | "Low";
 
-const watches = [
-  { name: "University admissions", url: "admissions.university.edu", interval: "Every 6 hours", state: "Active", changes: 2 },
-  { name: "SaaS pro pricing", url: "cloudtool.com/pricing", interval: "Every 12 hours", state: "Active", changes: 1 },
-  { name: "Research grant calls", url: "grants.foundation.org", interval: "Daily", state: "Paused", changes: 0 },
-];
-
 const changes = [
   {
     id: "deadline",

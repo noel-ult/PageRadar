@@ -1,61 +1,111 @@
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
+  postgres:
+    image: postgres:17-alpine
     restart: unless-stopped
-    ports:
-      - "3001:3001"
     environment:
-      - NODE_ENV=production
-      - PORT=3001
-      - DATABASE_URL=${DATABASE_URL}
-      - DIRECT_URL=${DIRECT_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      POSTGRES_DB: pageradar
+      POSTGRES_USER: pageradar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes: [postgres_data:/var/lib/postgresql/data]
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"]
-      interval: 30s
+      test: [CMD-SHELL, 'pg_isready -U pageradar -d pageradar']
+      interval: 5s
       timeout: 5s
-      retries: 3
-      start_period: 15s
-    env_file:
-      - path: .env
-        required: false
-    networks:
-      - default
-      - dokploy-network
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: [redis-server, --appendonly, 'yes', --maxmemory-policy, noeviction]
+    restart: unless-stopped
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build: { context: ., dockerfile: Dockerfile.api }
+    command: [node, apps/api/node_modules/prisma/build/index.js, migrate, deploy, --schema, apps/api/prisma/schema.prisma]
+    environment: &backend
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:-postgresql://pageradar:${POSTGRES_PASSWORD}@postgres:5432/pageradar}
+      DIRECT_URL: ${DIRECT_URL:-postgresql://pageradar:${POSTGRES_PASSWORD}@postgres:5432/pageradar}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET to a random secret}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      REDIS_URL: redis://redis:6379
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      LLM_ENABLED: ${LLM_ENABLED:-false}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_DAILY_CALL_LIMIT: ${LLM_DAILY_CALL_LIMIT:-100}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-alerts@pageradar.dev}
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  api:
+    build: { context: ., dockerfile: Dockerfile.api }
+    command: [node, apps/api/dist/src/main.js]
+    restart: unless-stopped
+    environment:
+      <<: *backend
+      PORT: 3001
+      RUNTIME_ROLE: api
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, curl, -f, http://localhost:3001/health]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  scheduler:
+    build: { context: ., dockerfile: Dockerfile.api }
+    command: [node, apps/api/dist/src/runtime.js]
+    restart: unless-stopped
+    healthcheck: { disable: true }
+    environment:
+      <<: *backend
+      RUNTIME_ROLE: scheduler
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+
+  worker:
+    build: { context: ., dockerfile: Dockerfile.api }
+    command: [node, apps/api/dist/src/runtime.js]
+    restart: unless-stopped
+    healthcheck: { disable: true }
+    stop_grace_period: 60s
+    environment:
+      <<: *backend
+      RUNTIME_ROLE: worker
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-5}
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
 
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
-      args:
-        - NEXT_PUBLIC_GRAPHQL_URL=${NEXT_PUBLIC_GRAPHQL_URL:-/graphql}
+    build: { context: ., dockerfile: Dockerfile.web, args: { NEXT_PUBLIC_GRAPHQL_URL: /graphql } }
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    ports: ['3000:3000']
     environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - HOSTNAME=0.0.0.0
-      - INTERNAL_API_URL=http://api:3001/graphql
-      - NEXT_PUBLIC_GRAPHQL_URL=${NEXT_PUBLIC_GRAPHQL_URL:-/graphql}
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      INTERNAL_API_URL: http://api:3001/graphql
+      APP_ORIGIN: ${FRONTEND_URL:-http://localhost:3000}
     depends_on:
-      - api
+      api: { condition: service_healthy }
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
-      interval: 30s
+      test: [CMD, curl, -f, http://localhost:3000/api/health]
+      interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 10s
-    env_file:
-      - path: .env
-        required: false
-    networks:
-      - default
-      - dokploy-network
+      retries: 6
 
-networks:
-  dokploy-network:
-    external: true
+volumes:
+  postgres_data:
+  redis_data:

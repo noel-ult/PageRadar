@@ -9,6 +9,8 @@ const CHANGE_TYPE_LABELS: Record<ChangeType, string> = {
   LINK_CHANGED: "Link Changed",
   SECTION_CHANGED: "Section Changed",
   CONTENT_CHANGED: "Content Changed",
+  ANNOUNCEMENT_ADDED: "New Announcement",
+  DOCUMENT_ADDED: "Document Added",
 };
 
 export function formatChangeType(value?: string | null): string {
@@ -60,7 +62,10 @@ export function getAfterValue(c: {
 }
 
 export function importanceStyles(importance?: string | number | null): string {
-  const label = typeof importance === "number" ? formatImportance(importance).toUpperCase() : importance;
+  const label =
+    typeof importance === "number"
+      ? formatImportance(importance).toUpperCase()
+      : importance;
   switch (label) {
     case "CRITICAL":
       return "bg-red-950/40 text-red-300 border border-red-800/40";
@@ -81,6 +86,8 @@ export function friendlyErrorMessage(err: unknown): string {
   if (typeof err === "string") return err;
   if (err instanceof Error) {
     const msg = err.message.replace(/^ApolloError:\s*/, "");
+    if (/received status code 50[234]|temporarily unavailable/i.test(msg))
+      return "PageRadar API is temporarily unavailable. Please try again shortly.";
     // Strip common technical prefixes but keep useful backend validation text.
     if (/failed to fetch|networkerror|load failed/i.test(msg))
       return "Network error. Check your connection and try again.";

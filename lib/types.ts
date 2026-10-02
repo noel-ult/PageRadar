@@ -1,6 +1,4 @@
-export const GRAPHQL_URL =
-  process.env.NEXT_PUBLIC_GRAPHQL_URL || "/graphql";
-
+export const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || "/graphql";
 
 export type ChangeType =
   | "DEADLINE_CHANGED"
@@ -10,7 +8,9 @@ export type ChangeType =
   | "PRICE_CHANGED"
   | "LINK_CHANGED"
   | "SECTION_CHANGED"
-  | "CONTENT_CHANGED";
+  | "CONTENT_CHANGED"
+  | "ANNOUNCEMENT_ADDED"
+  | "DOCUMENT_ADDED";
 
 export type Importance = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | number;
 
@@ -24,6 +24,11 @@ export interface ChangeSummary {
   id: string;
   changeType: ChangeType;
   importance: Importance;
+  severity?: string;
+  confidence?: number;
+  isMeaningful?: boolean;
+  changePercentage?: number;
+  affectedSections?: string[];
   section?: string | null;
   before?: string | null;
   after?: string | null;
@@ -40,6 +45,11 @@ export interface Watch {
   isActive: boolean;
   checkIntervalMinutes: number;
   interests?: string[];
+  minimumImportance?: number;
+  emailEnabled?: boolean;
+  includeSelector?: string | null;
+  excludeSelector?: string | null;
+  nextCheckAt?: string;
   lastCheckedAt?: string | null;
   createdAt?: string | null;
   latestChange?: ChangeSummary | null;
@@ -60,6 +70,17 @@ export interface DashboardStats {
   importantChanges: number;
 }
 
+export interface NotificationItem {
+  id: string;
+  changeId?: string | null;
+  channel: "IN_APP" | "EMAIL";
+  status: "PENDING" | "SENT" | "FAILED";
+  message: string;
+  readAt?: string | null;
+  sentAt?: string | null;
+  createdAt: string;
+}
+
 export const INTEREST_OPTIONS = [
   { value: "DEADLINE", label: "Deadline" },
   { value: "ELIGIBILITY", label: "Eligibility" },
@@ -67,4 +88,6 @@ export const INTEREST_OPTIONS = [
   { value: "REQUIREMENT", label: "Requirement" },
   { value: "PRICE", label: "Price" },
   { value: "LINK", label: "Link" },
+  { value: "ANNOUNCEMENT", label: "New announcements" },
+  { value: "DOCUMENT", label: "Documents" },
 ] as const;

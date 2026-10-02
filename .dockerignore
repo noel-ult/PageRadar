@@ -17,3 +17,8 @@ playwright-report
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+
+.next-*
+.local
+.env.*
+!.env.example

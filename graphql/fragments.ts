@@ -6,6 +6,11 @@ export const CHANGE_SUMMARY_FRAGMENT = gql`
     watchId
     changeType: type
     importance
+    severity
+    confidence
+    isMeaningful
+    changePercentage
+    affectedSections
     section
     before: oldValue
     after: newValue
@@ -27,14 +32,18 @@ export const WATCH_CARD_FRAGMENT = gql`
     name: title
     url
     isActive
+    interests
+    minimumImportance
+    emailEnabled
+    includeSelector
+    excludeSelector
+    nextCheckAt
     checkIntervalMinutes: checkInterval
     lastCheckedAt
     createdAt
     latestChange {
-      id
-      changeType: type
-      importance
-      detectedAt
+      ...ChangeSummaryFields
     }
   }
+  ${CHANGE_SUMMARY_FRAGMENT}
 `;

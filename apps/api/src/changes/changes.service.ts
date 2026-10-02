@@ -1,2 +1,41 @@
-import { Injectable, NotFoundException } from '@nestjs/common'; import { Prisma, Change as PrismaChange } from '@prisma/client'; import { PrismaService } from '../prisma/prisma.service'; import { ChangeFilterInput } from './dto/change-filter.input';
-@Injectable() export class ChangesService { constructor(private readonly prisma: PrismaService) {} list(userId: string, filter?: ChangeFilterInput) { const where: Prisma.ChangeWhereInput = { watch: { userId }, ...(filter?.watchId ? { watchId: filter.watchId } : {}), ...(filter?.type ? { type: filter.type } : {}), ...(filter?.importance !== undefined ? { importance: { gte: filter.importance } } : {}), ...(filter?.from || filter?.to ? { detectedAt: { ...(filter.from ? { gte: new Date(filter.from) } : {}), ...(filter.to ? { lte: new Date(filter.to) } : {}) } } : {}) }; return this.prisma.change.findMany({ where, orderBy: { detectedAt: 'desc' } }); } async get(id: string, userId: string): Promise<PrismaChange> { const change = await this.prisma.change.findFirst({ where: { id, watch: { userId } } }); if (!change) throw new NotFoundException('Change not found'); return change; } }
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma, Change as PrismaChange } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
+import { ChangeFilterInput } from "./dto/change-filter.input";
+@Injectable()
+export class ChangesService {
+  constructor(private readonly prisma: PrismaService) {}
+  where(userId: string, filter?: ChangeFilterInput) {
+    const where: Prisma.ChangeWhereInput = {
+      watch: { userId },
+      ...(filter?.watchId ? { watchId: filter.watchId } : {}),
+      ...(filter?.type ? { type: filter.type } : {}),
+      ...(filter?.importance !== undefined
+        ? { importance: { gte: filter.importance } }
+        : {}),
+      ...(filter?.from || filter?.to
+        ? {
+            detectedAt: {
+              ...(filter.from ? { gte: new Date(filter.from) } : {}),
+              ...(filter.to ? { lte: new Date(filter.to) } : {}),
+            },
+          }
+        : {}),
+    };
+    return where;
+  }
+  list(userId: string, filter?: ChangeFilterInput) {
+    return this.prisma.change.findMany({
+      where: this.where(userId, filter),
+      orderBy: [{ detectedAt: "desc" }, { id: "desc" }],
+      take: 100,
+    });
+  }
+  async get(id: string, userId: string): Promise<PrismaChange> {
+    const change = await this.prisma.change.findFirst({
+      where: { id, watch: { userId } },
+    });
+    if (!change) throw new NotFoundException("Change not found");
+    return change;
+  }
+}

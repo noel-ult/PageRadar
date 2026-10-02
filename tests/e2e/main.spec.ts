@@ -1,181 +1,363 @@
 import { test, expect } from "@playwright/test";
-
-/**
- * Main E2E user flow (frontend only, GraphQL mocked at the network layer):
- * Register -> Login -> Dashboard -> Add Watch -> Open Watch ->
- * View Latest Change -> Open Change Details -> See Before/After -> Logout.
- *
- * Note: mocked payloads include `__typename` because Apollo Client adds
- * `__typename` to every selection set and drops fragment fields it cannot
- * normalize — exactly as a real NestJS GraphQL backend would return.
- */
-test("pageradar main flow", async ({ page }) => {
-  const watchId = "watch-1";
-  const changeId = "change-1";
-  const now = new Date().toISOString();
-
-  const changeCore = {
-    __typename: "Change",
-    id: changeId,
-    changeType: "DEADLINE_CHANGED",
-    importance: "HIGH",
-    section: "Admissions",
-    before: "17 September 2026",
-    after: "20 September 2026",
-    oldValue: null,
-    newValue: null,
-    explanation:
-      "Registration deadline changed from 17 September 2026 to 20 September 2026.",
-    detectedAt: now,
+const watchId = "11111111-1111-4111-8111-111111111111";
+const changeId = "22222222-2222-4222-8222-222222222222";
+const date = "2026-10-02T00:00:00.000Z";
+test("watch preferences, async checks, edit, history, read state and delete", async ({
+  page,
+  context,
+}) => {
+  let exists = false;
+  let changed = false;
+  let read = false;
+  let checking = 0;
+  let deleteAttempts = 0;
+  let watch = {
+    __typename: "WatchModel",
+    id: watchId,
+    name: "Scholarship",
+    url: "https://example.com/scholarship",
+    isActive: true,
+    checkIntervalMinutes: 360,
+    interests: ["DEADLINE"],
+    minimumImportance: 65,
+    emailEnabled: true,
+    includeSelector: null,
+    excludeSelector: null,
+    nextCheckAt: date,
+    lastCheckedAt: date,
+    createdAt: date,
+    latestChange: null as unknown,
   };
-
   const change = {
-    ...changeCore,
+    __typename: "ChangeModel",
+    id: changeId,
+    watchId,
+    changeType: "DEADLINE_CHANGED",
+    importance: 85,
+    severity: "CRITICAL",
+    confidence: 0.92,
+    isMeaningful: true,
+    changePercentage: 12,
+    affectedSections: ["Deadline"],
+    section: "Deadline",
+    before: "October 15",
+    after: "November 2",
+    oldValue: "October 15",
+    newValue: "November 2",
+    explanation: "The deadline was extended by 18 days.",
+    detectedAt: date,
     watch: {
-      __typename: "Watch",
+      __typename: "WatchModel",
       id: watchId,
-      name: "Admissions",
-      url: "https://example.com/admissions",
+      name: "Scholarship",
+      url: watch.url,
     },
   };
-
-  const watch = {
-    __typename: "Watch",
-    id: watchId,
-    name: "Admissions",
-    url: "https://example.com/admissions",
-    status: "ACTIVE",
-    checkIntervalMinutes: 60,
-    interests: ["DEADLINE", "STATUS"],
-    lastCheckedAt: now,
-    createdAt: now,
-    latestChange: changeCore,
-  };
-
-  await page.route("**/graphql**", async (route) => {
-    const req = route.request();
-    let operationName: string | undefined;
-    try {
-      operationName = req.postDataJSON?.()?.operationName as string | undefined;
-    } catch {
-      operationName = undefined;
-    }
-
-    switch (operationName) {
-      case "Register":
-        return route.fulfill({
-          json: {
-            data: {
-              register: {
-                __typename: "User",
-                id: "u1",
-                name: "Test",
-                email: "t@e.com",
+  await page.route("**/graphql", async (route) => {
+    const { query, variables = {} } = route.request().postDataJSON();
+    let data: unknown = {};
+    let headers: Record<string, string> = {};
+    if (/mutation Login/.test(query)) {
+      data = {
+        login: {
+          __typename: "AuthPayload",
+          accessToken: "session-established",
+          user: {
+            __typename: "UserModel",
+            id: "u1",
+            name: "Test user",
+            email: "a@example.com",
+          },
+        },
+      };
+      headers = {
+        "set-cookie":
+          "pageradar_session=test-session; Path=/; HttpOnly; SameSite=Lax",
+      };
+    } else if (/query Me/.test(query))
+      data = {
+        me: {
+          __typename: "UserModel",
+          id: "u1",
+          name: "Test user",
+          email: "a@example.com",
+        },
+      };
+    else if (/query DashboardStats/.test(query))
+      data = {
+        dashboardStats: {
+          __typename: "DashboardStatsModel",
+          totalWatches: exists ? 1 : 0,
+          activeWatches: exists && watch.isActive ? 1 : 0,
+          recentChanges: changed ? 1 : 0,
+          importantChanges: changed ? 1 : 0,
+          failedChecks: 0,
+        },
+      };
+    else if (/query Watches\(/.test(query))
+      data = {
+        watchesPage: {
+          __typename: "WatchConnection",
+          nodes: exists ? [watch] : [],
+          pageInfo: {
+            __typename: "PageInfo",
+            hasNextPage: false,
+            endCursor: null,
+          },
+        },
+      };
+    else if (/query RecentChanges/.test(query))
+      data = {
+        changesPage: {
+          __typename: "ChangeConnection",
+          nodes: changed ? [change] : [],
+          pageInfo: {
+            __typename: "PageInfo",
+            hasNextPage: false,
+            endCursor: null,
+          },
+        },
+      };
+    else if (/query Notifications/.test(query))
+      data = {
+        unreadNotificationCount: changed && !read ? 1 : 0,
+        notifications: changed
+          ? [
+              {
+                __typename: "NotificationModel",
+                id: "n1",
+                changeId,
+                channel: "IN_APP",
+                status: "SENT",
+                message: change.explanation,
+                readAt: read ? date : null,
+                sentAt: date,
+                createdAt: date,
               },
+            ]
+          : [],
+      };
+    else if (/mutation CreateWatch/.test(query)) {
+      exists = true;
+      expect(variables.input.interests).toEqual(["DEADLINE"]);
+      expect(variables.input.minimumImportance).toBe(65);
+      watch = { ...watch, name: variables.input.title };
+      data = { createWatch: watch };
+    } else if (/mutation UpdateWatch/.test(query)) {
+      watch = {
+        ...watch,
+        name: variables.input.title,
+        checkIntervalMinutes: variables.input.checkInterval,
+      };
+      data = { updateWatch: watch };
+    } else if (/mutation PreviewWatch/.test(query))
+      data = {
+        previewWatch: {
+          __typename: "ContentPreview",
+          text: "Application deadline: October 15",
+          sections: ["Deadline"],
+        },
+      };
+    else if (/mutation CheckWatchNow/.test(query)) {
+      checking = 1;
+      data = {
+        checkWatchNow: {
+          __typename: "CheckRunModel",
+          id: "r2",
+          status: "QUEUED",
+          completedAt: null,
+          error: null,
+        },
+      };
+    } else if (/query WatchHistory/.test(query)) {
+      const active = checking === 1;
+      if (checking) checking++;
+      if (checking > 2) {
+        changed = true;
+        watch.latestChange = change;
+      }
+      data = {
+        checkRuns: {
+          __typename: "CheckRunConnection",
+          nodes: [
+            {
+              __typename: "CheckRunModel",
+              id: checking ? "r2" : "r1",
+              status: active
+                ? "RUNNING"
+                : changed
+                  ? "CHANGE_DETECTED"
+                  : "SUCCESS",
+              attempts: 1,
+              startedAt: date,
+              completedAt: active ? null : date,
+              nextAttemptAt: date,
+              error: null,
+              changes: changed ? [change] : [],
             },
+          ],
+          pageInfo: {
+            __typename: "PageInfo",
+            hasNextPage: false,
+            endCursor: null,
           },
-        });
-      case "Login":
-        return route.fulfill({
-          json: {
-            data: {
-              login: {
-                __typename: "AuthPayload",
-                accessToken: "test-token",
-                access_token: null,
-                token: null,
-                user: {
-                  __typename: "User",
-                  id: "u1",
-                  name: "Test",
-                  email: "t@e.com",
-                },
-              },
-            },
+        },
+      };
+    } else if (/query Watch\(/.test(query))
+      data = {
+        watch,
+        changesPage: {
+          __typename: "ChangeConnection",
+          nodes: changed ? [change] : [],
+          pageInfo: {
+            __typename: "PageInfo",
+            hasNextPage: false,
+            endCursor: null,
           },
+        },
+      };
+    else if (/query Change\(/.test(query)) data = { change };
+    else if (/mutation PauseWatch/.test(query)) {
+      watch.isActive = false;
+      data = {
+        toggleWatch: { __typename: "WatchModel", id: watchId, isActive: false },
+      };
+    } else if (/mutation ResumeWatch/.test(query)) {
+      watch.isActive = true;
+      data = {
+        toggleWatch: { __typename: "WatchModel", id: watchId, isActive: true },
+      };
+    } else if (/mutation DeleteWatch/.test(query)) {
+      if (++deleteAttempts === 1) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            errors: [{ message: "Unable to delete the watch. Try again." }],
+          }),
         });
-      case "Me":
-        return route.fulfill({
-          json: {
-            data: {
-              me: { __typename: "User", id: "u1", name: "Test", email: "t@e.com" },
-            },
-          },
-        });
-      case "DashboardStats":
-        return route.fulfill({
-          json: {
-            data: {
-              dashboardStats: {
-                __typename: "DashboardStats",
-                activeWatches: 1,
-                recentChanges: 1,
-                importantChanges: 1,
-              },
-            },
-          },
-        });
-      case "Watches":
-        return route.fulfill({ json: { data: { watches: [watch] } } });
-      case "Watch":
-        return route.fulfill({
-          json: {
-            data: {
-              watch: { ...watch, changes: [changeCore] },
-            },
-          },
-        });
-      case "RecentChanges":
-        return route.fulfill({ json: { data: { changes: [change] } } });
-      case "Change":
-        return route.fulfill({ json: { data: { change } } });
-      case "CreateWatch":
-        return route.fulfill({ json: { data: { createWatch: watch } } });
-      default:
-        return route.continue();
-    }
+        return;
+      }
+      exists = false;
+      data = { deleteWatch: true };
+    } else if (/mutation MarkAllNotificationsRead/.test(query)) {
+      read = true;
+      data = { markAllNotificationsRead: true };
+    } else throw new Error(`Unexpected GraphQL operation: ${query}`);
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers,
+      body: JSON.stringify({ data }),
+    });
   });
-
-  // Register
-  await page.goto("/register");
-  await page.getByLabel("Name").fill("Test");
-  await page.getByLabel("Email").fill("t@e.com");
-  await page.getByLabel("Password").fill("password123");
-  await page.getByRole("button", { name: "Create Account" }).click();
-  await expect(page).toHaveURL(/\/login/);
-
-  // Login
-  await page.getByLabel("Email").fill("t@e.com");
-  await page.getByLabel("Password").fill("password123");
-  await page.getByRole("button", { name: "Login" }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
-  await expect(page.getByText("Active Watches")).toBeVisible();
-
-  // Add watch
-  await page.getByRole("link", { name: "Add Watch" }).first().click();
-  await expect(page).toHaveURL(/\/watches\/new/);
-  await page.getByLabel("Watch Name").fill("Admissions");
-  await page.getByLabel("Website URL").fill("https://example.com/admissions");
-  await page.getByRole("button", { name: "Create Watch" }).click();
-  await expect(page).toHaveURL(new RegExp(`/watches/${watchId}`));
-  await expect(page.getByText("Deadline Changed").first()).toBeVisible();
-
-  // Open change details, see before/after
-  await page.getByRole("link", { name: "View change details" }).click();
-  await expect(page).toHaveURL(new RegExp(`/changes/${changeId}`));
-  await expect(page.getByText("17 September 2026").first()).toBeVisible();
-  await expect(page.getByText("20 September 2026").first()).toBeVisible();
-  await expect(page.getByText(/Registration deadline changed/)).toBeVisible();
-
-  // Logout via sidebar
-  await page.getByRole("button", { name: "Logout" }).click();
-  await expect(page).toHaveURL(/\/login/);
+  await page.goto("/login");
+  await page.getByLabel("Email", { exact: true }).fill("a@example.com");
+  await page.getByLabel("Password", { exact: true }).fill("test-password");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/dashboard/);
+  expect(
+    (await context.cookies()).find((c) => c.name === "pageradar_session")
+      ?.httpOnly,
+  ).toBe(true);
+  expect(
+    await page.evaluate(() => localStorage.getItem("pageradar_token")),
+  ).toBeNull();
+  await page.goto("/watches/new");
+  await page.getByLabel("Watch name").fill("Scholarship");
+  await page.getByLabel("Website URL").fill(watch.url);
+  await page.getByLabel("Deadline", { exact: true }).check();
+  await page.getByLabel("Minimum alert importance").fill("65");
+  await page.getByRole("button", { name: "Preview content" }).click();
+  await expect(
+    page.getByRole("region", { name: "Content preview" }),
+  ).toContainText("October 15");
+  await page.getByRole("button", { name: "Create watch", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/watches/${watchId}$`));
+  await expect(page.getByText("Baseline captured")).toBeVisible();
+  await page.getByRole("button", { name: "Check now", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Check in progress…" }),
+  ).toBeDisabled();
+  await expect(page.getByText("Changes detected")).toBeVisible({
+    timeout: 15000,
+  });
+  await page.getByRole("link", { name: "Edit watch" }).click();
+  await page.getByLabel("Watch name").fill("Scholarship updates");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Scholarship updates", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Pause", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Resume", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Resume", exact: true }).click();
+  await page.getByRole("link", { name: "View details →" }).click();
+  await expect(
+    page.getByRole("region", { name: "After", exact: true }),
+  ).toContainText("November 2");
+  await page.screenshot({
+    path: `/tmp/pageradar-${test.info().project.name}.png`,
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "View notifications" }).click();
+  await expect(
+    page.getByRole("button", { name: "Mark all read" }),
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "Mark all read" }).click();
+  await expect(
+    page.getByRole("button", { name: "Mark all read" }),
+  ).toBeDisabled();
+  await page.goto(`/watches/${watchId}`);
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Cancel", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Delete", exact: true })
+    .click();
+  await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
+    "Unable to delete",
+  );
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Delete", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/watches$/);
+  await expect(
+    page.getByText("You are not monitoring any webpages yet."),
+  ).toBeVisible();
 });
 
-test("auth validation blocks empty login", async ({ page }) => {
+test("login validation and API unavailable state preserve inputs", async ({
+  page,
+}) => {
   await page.goto("/login");
-  await page.getByRole("button", { name: "Login" }).click();
-  await expect(
-    page.getByText("Email and password are required.")
-  ).toBeVisible();
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.locator('form [role="alert"]')).toContainText("required");
+  await page.route("**/graphql", (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({
+        errors: [{ message: "PageRadar API is temporarily unavailable." }],
+      }),
+    }),
+  );
+  await page.getByLabel("Email", { exact: true }).fill("a@example.com");
+  await page.getByLabel("Password", { exact: true }).fill("test-password");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.locator('form [role="alert"]')).toContainText(
+    "temporarily unavailable",
+  );
+  await expect(page.getByLabel("Email", { exact: true })).toHaveValue(
+    "a@example.com",
+  );
 });

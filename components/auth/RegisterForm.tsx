@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "@apollo/client/react";
 import { REGISTER_MUTATION } from "@/graphql/mutations";
 import { friendlyErrorMessage } from "@/lib/format";
+import { useHydrated } from "@/lib/useHydrated";
 
 export function RegisterForm() {
+  const hydrated = useHydrated();
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -37,7 +39,12 @@ export function RegisterForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+    <form
+      method="post"
+      onSubmit={onSubmit}
+      noValidate
+      className="flex flex-col gap-4"
+    >
       <div className="flex flex-col gap-1.5">
         <label htmlFor="name" className="text-xs font-medium text-zinc-300">
           Name
@@ -88,23 +95,23 @@ export function RegisterForm() {
         />
       </div>
       {formError ? (
-        <div role="alert" className="rounded-lg border border-red-900/50 bg-red-950/30 p-2.5 text-xs text-red-300">
+        <div
+          role="alert"
+          className="rounded-lg border border-red-900/50 bg-red-950/30 p-2.5 text-xs text-red-300"
+        >
           {formError}
         </div>
       ) : null}
       <button
         type="submit"
-        disabled={loading}
+        disabled={!hydrated || loading}
         className="mt-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-950 hover:bg-zinc-200 disabled:opacity-50 transition"
       >
         {loading ? "Creating account..." : "Create account"}
       </button>
       <p className="text-center text-xs text-zinc-400 mt-2">
         Already have an account?{" "}
-        <Link
-          href="/login"
-          className="text-white hover:underline font-medium"
-        >
+        <Link href="/login" className="text-white hover:underline font-medium">
           Sign in
         </Link>
       </p>

@@ -1,137 +1,402 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { CheckRunStatus, ChangeType } from '@prisma/client';
-import { createHash } from 'node:crypto';
-import { lookup } from 'node:dns/promises';
-import { isIP } from 'node:net';
-import { PrismaService } from '../prisma/prisma.service';
+import {
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  OnModuleDestroy,
+  BadRequestException,
+} from "@nestjs/common";
+import { CheckRunStatus, Prisma, Watch } from "@prisma/client";
+import { randomUUID } from "node:crypto";
+import { PrismaService } from "../prisma/prisma.service";
+import {
+  ContentNormalizer,
+  EXTRACTION_VERSION,
+  NormalizedSection,
+} from "./normalization/content-normalizer";
+import { ChangeClassifier } from "./classification/change-classifier";
+import {
+  MonitoringQueueService,
+  runsRole,
+} from "./queue/monitoring-queue.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { SafeFetcher } from "./fetch/safe-fetcher";
+import { FetchFailure } from "./security/url-validator";
 
-const MAX_CONTENT_BYTES = 3_000_000;
-const FETCH_TIMEOUT_MS = 20_000;
-const TICK_MS = 30_000;
-
+const ACTIVE = [
+  CheckRunStatus.QUEUED,
+  CheckRunStatus.RUNNING,
+  CheckRunStatus.RETRYING,
+];
+const LEASE_MS = 60_000;
 
 @Injectable()
-export class MonitoringService implements OnModuleInit, OnModuleDestroy {
+export class MonitoringService
+  implements OnApplicationBootstrap, OnModuleDestroy
+{
   private readonly logger = new Logger(MonitoringService.name);
-  private readonly processing = new Set<string>();
   private timer?: NodeJS.Timeout;
+  private ticking = false;
+  private stopping = false;
+  private tickStopped?: () => void;
+  private readonly instance = randomUUID();
+  private lastCleanup = 0;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly normalizer: ContentNormalizer,
+    private readonly classifier: ChangeClassifier,
+    private readonly queue: MonitoringQueueService,
+    private readonly notifications: NotificationsService,
+    private readonly fetcher: SafeFetcher,
+  ) {}
 
-  onModuleInit() {
-    void this.checkDueWatches();
-    this.timer = setInterval(() => void this.checkDueWatches(), TICK_MS);
+  onApplicationBootstrap() {
+    this.queue.setExecutor("page-monitoring", (id) => this.executeCheck(id));
+    if (runsRole("scheduler") || runsRole("worker")) {
+      void this.tick();
+      this.timer = setInterval(() => void this.tick(), 5000);
+    }
   }
-
-  onModuleDestroy() {
+  async onModuleDestroy() {
+    this.stopping = true;
     if (this.timer) clearInterval(this.timer);
+    if (this.ticking)
+      await new Promise<void>((resolve) => {
+        this.tickStopped = resolve;
+      });
   }
 
   async checkNow(watchId: string, userId: string) {
-    const watch = await this.prisma.watch.findFirst({ where: { id: watchId, userId } });
-    if (!watch) return null;
-    return this.checkWatch(watch);
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId}::uuid FOR UPDATE`;
+      await tx.$queryRaw`SELECT "id" FROM "Watch" WHERE "id" = ${watchId}::uuid FOR UPDATE`;
+      const watch = await tx.watch.findFirst({
+        where: { id: watchId, userId },
+      });
+      if (!watch) return null;
+      const existing = await tx.checkRun.findFirst({
+        where: { watchId, status: { in: ACTIVE } },
+      });
+      if (existing) return existing;
+      const recent = await tx.checkRun.count({
+        where: {
+          watch: { userId },
+          manual: true,
+          startedAt: { gte: new Date(Date.now() - 3600_000) },
+        },
+      });
+      if (recent >= Number(process.env.MANUAL_CHECKS_PER_HOUR ?? 60))
+        throw new BadRequestException(
+          "Hourly manual check limit reached. Scheduled checks will continue.",
+        );
+      // CheckRun is the durable enqueue outbox. Scheduler delivers it after commit.
+      return tx.checkRun.create({
+        data: { watchId, revision: watch.revision, manual: true },
+      });
+    });
   }
 
-  private async checkDueWatches() {
-    const watches = await this.prisma.watch.findMany({ where: { isActive: true } });
-    const now = Date.now();
-    await Promise.all(
-      watches
-        .filter((watch) => !watch.lastCheckedAt || now - watch.lastCheckedAt.getTime() >= watch.checkInterval * 60_000)
-        .map((watch) => this.checkWatch(watch)),
-    );
-  }
-
-  private async checkWatch(watch: { id: string; url: string }) {
-    if (this.processing.has(watch.id)) return null;
-    this.processing.add(watch.id);
-    const checkRun = await this.prisma.checkRun.create({ data: { watchId: watch.id, status: CheckRunStatus.RUNNING } });
-
-    try {
-      const content = await this.fetchPage(watch.url);
-      const contentHash = createHash('sha256').update(content).digest('hex');
-      const previous = await this.prisma.snapshot.findFirst({ where: { watchId: watch.id }, orderBy: { capturedAt: 'desc' } });
-      const checkedAt = new Date();
-
-      if (!previous) {
-        await this.prisma.$transaction([
-          this.prisma.snapshot.create({ data: { watchId: watch.id, content, contentHash } }),
-          this.prisma.watch.update({ where: { id: watch.id }, data: { lastCheckedAt: checkedAt } }),
-          this.prisma.checkRun.update({ where: { id: checkRun.id }, data: { status: CheckRunStatus.SUCCESS, completedAt: checkedAt } }),
-        ]);
-      } else if (previous.contentHash === contentHash) {
-        await this.prisma.$transaction([
-          this.prisma.watch.update({ where: { id: watch.id }, data: { lastCheckedAt: checkedAt } }),
-          this.prisma.checkRun.update({ where: { id: checkRun.id }, data: { status: CheckRunStatus.NO_CHANGE, completedAt: checkedAt } }),
-        ]);
-      } else {
-        const currentExcerpt = this.excerpt(content);
-        const previousExcerpt = this.excerpt(previous.content);
-        await this.prisma.$transaction(async (tx) => {
-          const snapshot = await tx.snapshot.create({ data: { watchId: watch.id, content, contentHash } });
-          await tx.change.create({ data: { watchId: watch.id, oldSnapshotId: previous.id, newSnapshotId: snapshot.id, type: ChangeType.CONTENT_CHANGED, oldValue: previousExcerpt, newValue: currentExcerpt, section: 'Page content', importance: 50, reason: 'The monitored page content changed.' } });
-          await tx.watch.update({ where: { id: watch.id }, data: { lastCheckedAt: checkedAt } });
-          await tx.checkRun.update({ where: { id: checkRun.id }, data: { status: CheckRunStatus.CHANGE_DETECTED, completedAt: checkedAt } });
+  private async schedule(watch: Watch) {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "Watch" WHERE "id" = ${watch.id}::uuid FOR UPDATE`;
+      const current = await tx.watch.findUnique({ where: { id: watch.id } });
+      if (!current?.isActive || current.nextCheckAt > new Date()) return;
+      if (
+        !(await tx.checkRun.findFirst({
+          where: { watchId: watch.id, status: { in: ACTIVE } },
+        }))
+      ) {
+        await tx.checkRun.create({
+          data: { watchId: watch.id, revision: current.revision },
         });
       }
-
-      return this.prisma.checkRun.findUnique({ where: { id: checkRun.id } });
-    } catch (error) {
-      const message = error instanceof Error ? error.message.slice(0, 1_000) : 'Unknown monitoring error';
-      this.logger.warn(`Watch ${watch.id} failed: ${message}`);
-      const completedAt = new Date();
-      await this.prisma.$transaction([
-        this.prisma.watch.update({ where: { id: watch.id }, data: { lastCheckedAt: completedAt } }),
-        this.prisma.checkRun.update({ where: { id: checkRun.id }, data: { status: CheckRunStatus.FAILED, error: message, completedAt } }),
-      ]);
-      return this.prisma.checkRun.findUnique({ where: { id: checkRun.id } });
-    } finally {
-      this.processing.delete(watch.id);
-    }
-  }
-
-  private async fetchPage(rawUrl: string) {
-    const url = new URL(rawUrl);
-    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Unsupported watch URL');
-    const addresses = await lookup(url.hostname, { all: true, verbatim: true });
-    if (!addresses.length || addresses.some(({ address }) => this.isPrivateAddress(address))) throw new Error('Watch URL resolves to a private network address');
-
-    const response = await fetch(url, {
-      redirect: 'follow',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      await tx.watch.update({
+        where: { id: watch.id },
+        data: {
+          nextCheckAt: new Date(Date.now() + current.checkInterval * 60_000),
+        },
+      });
     });
-    if (!response.ok) throw new Error(`Page returned HTTP ${response.status}`);
-    const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
-    if (!contentType.includes('text/html') && !contentType.includes('application/xhtml+xml')) {
-      throw new Error('Watch URL did not return HTML');
-    }
-    const declaredSize = Number(response.headers.get('content-length') ?? 0);
-    if (declaredSize > MAX_CONTENT_BYTES) throw new Error('Page exceeds the 3 MB monitoring limit');
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    if (bytes.byteLength > MAX_CONTENT_BYTES) throw new Error('Page exceeds the 3 MB monitoring limit');
-    return new TextDecoder().decode(bytes).replace(/<!--[^]*?-->/g, '').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '').replace(/\s+/g, ' ').trim();
   }
 
-
-  private excerpt(content: string) {
-    return content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1_000);
+  async tick() {
+    if (this.ticking || this.stopping) return;
+    this.ticking = true;
+    try {
+      for (const role of ["scheduler", "worker"])
+        if (runsRole(role))
+          await this.prisma.runtimeHeartbeat.upsert({
+            where: { id: `${this.instance}-${role}` },
+            create: { id: `${this.instance}-${role}`, role },
+            update: { seenAt: new Date() },
+          });
+      if (!runsRole("scheduler")) return;
+      const watches = await this.prisma.watch.findMany({
+        where: { isActive: true, nextCheckAt: { lte: new Date() } },
+        orderBy: [{ nextCheckAt: "asc" }, { id: "asc" }],
+        take: 200,
+      });
+      for (const watch of watches) await this.schedule(watch);
+      const pending = await this.prisma.checkRun.findMany({
+        where: {
+          status: { in: ACTIVE },
+          nextAttemptAt: { lte: new Date() },
+          OR: [{ leaseUntil: null }, { leaseUntil: { lt: new Date() } }],
+        },
+        orderBy: { startedAt: "asc" },
+        take: 200,
+      });
+      for (const run of pending) {
+        // Stable job IDs plus execution leases make repeated outbox delivery safe.
+        await this.queue.enqueue("page-monitoring", run.id);
+        await this.prisma.checkRun.updateMany({
+          where: { id: run.id, status: { in: ACTIVE } },
+          data: { enqueuedAt: new Date() },
+        });
+      }
+      await this.notifications.dispatchDue();
+      if (Date.now() - this.lastCleanup > 3600_000) {
+        await this.cleanup();
+        this.lastCleanup = Date.now();
+      }
+    } catch {
+      this.logger.error(
+        "Scheduler tick failed; durable work remains pending for recovery.",
+      );
+    } finally {
+      this.ticking = false;
+      this.tickStopped?.();
+    }
   }
 
-  private isPrivateAddress(address: string) {
-    const ipv4 = address.startsWith('::ffff:') ? address.slice(7) : address;
-    if (isIP(ipv4) === 4) {
-      const [a, b] = ipv4.split('.').map(Number);
-      return a === 0 || a === 10 || a === 127 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 198 && (b === 18 || b === 19));
+  async executeCheck(checkRunId: string) {
+    const owner = randomUUID();
+    const claimed = await this.prisma.checkRun.updateMany({
+      where: {
+        id: checkRunId,
+        status: { in: ACTIVE },
+        OR: [{ leaseUntil: null }, { leaseUntil: { lt: new Date() } }],
+      },
+      data: {
+        status: CheckRunStatus.RUNNING,
+        leaseOwner: owner,
+        leaseUntil: new Date(Date.now() + LEASE_MS),
+        attempts: { increment: 1 },
+        error: null,
+      },
+    });
+    if (!claimed.count) return;
+    const heartbeat = setInterval(() => {
+      void this.prisma.checkRun
+        .updateMany({
+          where: {
+            id: checkRunId,
+            leaseOwner: owner,
+            status: CheckRunStatus.RUNNING,
+          },
+          data: { leaseUntil: new Date(Date.now() + LEASE_MS) },
+        })
+        .catch(() => this.logger.warn("Check lease refresh failed"));
+    }, 15_000);
+    let attempt = 1;
+    try {
+      const run = await this.prisma.checkRun.findUniqueOrThrow({
+        where: { id: checkRunId },
+        include: { watch: true },
+      });
+      attempt = run.attempts;
+      const watch = run.watch;
+      if (attempt > 3)
+        throw new FetchFailure(
+          "Check attempts exhausted after worker recovery",
+        );
+      if (run.revision !== watch.revision || (!run.manual && !watch.isActive)) {
+        await this.cancel(checkRunId, owner);
+        return;
+      }
+      const fetched = await this.fetcher.fetchPage(watch.url);
+      const normalized = this.normalizer.normalize(fetched.html, {
+        includeSelector: watch.includeSelector,
+        excludeSelector: watch.excludeSelector,
+        baseUrl: fetched.finalUrl,
+      });
+      const previous = await this.prisma.snapshot.findFirst({
+        where: { watchId: watch.id, revision: watch.revision },
+        orderBy: [{ capturedAt: "desc" }, { id: "desc" }],
+      });
+      const baseline =
+        !previous || previous.extractionVersion !== EXTRACTION_VERSION;
+      const unchanged =
+        !baseline && previous!.contentHash === normalized.contentHash;
+      const events =
+        baseline || unchanged
+          ? []
+          : await this.classifier.classifyMany(
+              previous!.content,
+              normalized.normalizedText,
+              previous!.sections as unknown as NormalizedSection[],
+              normalized.sections,
+              normalized.title || watch.title,
+            );
+      const checkedAt = new Date();
+      await this.prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "Watch" WHERE "id" = ${watch.id}::uuid FOR UPDATE`;
+        const current = await tx.watch.findUnique({ where: { id: watch.id } });
+        if (
+          !current ||
+          current.revision !== run.revision ||
+          (!run.manual && !current.isActive)
+        ) {
+          await this.cancel(checkRunId, owner, tx);
+          return;
+        }
+        const completed = await tx.checkRun.updateMany({
+          where: {
+            id: checkRunId,
+            leaseOwner: owner,
+            status: CheckRunStatus.RUNNING,
+          },
+          data: {
+            status: baseline
+              ? CheckRunStatus.SUCCESS
+              : unchanged
+                ? CheckRunStatus.NO_CHANGE
+                : CheckRunStatus.CHANGE_DETECTED,
+            completedAt: checkedAt,
+            leaseUntil: null,
+            leaseOwner: null,
+          },
+        });
+        if (!completed.count)
+          throw new FetchFailure("Execution lease lost", true);
+        if (!unchanged) {
+          const snapshot = await tx.snapshot.create({
+            data: {
+              watchId: watch.id,
+              revision: run.revision,
+              content: normalized.normalizedText,
+              contentHash: normalized.contentHash,
+              extractionVersion: EXTRACTION_VERSION,
+              sections: normalized.sections as unknown as Prisma.InputJsonValue,
+              links: normalized.links,
+              finalUrl: fetched.finalUrl,
+              httpStatus: fetched.httpStatus,
+              capturedAt: checkedAt,
+            },
+          });
+          for (const event of events) {
+            const c = event.result;
+            const change = await tx.change.create({
+              data: {
+                watchId: watch.id,
+                checkRunId,
+                eventKey: event.eventKey,
+                oldSnapshotId: previous!.id,
+                newSnapshotId: snapshot.id,
+                type: c.category,
+                oldValue: c.oldValue,
+                newValue: c.newValue,
+                section: c.section,
+                importance: c.importance,
+                reason: c.summary,
+                severity: c.severity,
+                confidence: c.confidence,
+                isMeaningful: c.isMeaningful,
+                changePercentage: event.percentage,
+                affectedSections: [c.section],
+                classifierVersion: 2,
+                detectedAt: checkedAt,
+              },
+            });
+            if (c.isMeaningful)
+              await this.notifications.createForChange(
+                {
+                  userId: watch.userId,
+                  changeId: change.id,
+                  watchTitle: current.title,
+                  changeType: c.category,
+                  importance: c.importance,
+                  summary: c.summary,
+                  oldValue: c.oldValue,
+                  newValue: c.newValue,
+                  watch: current,
+                },
+                tx,
+              );
+          }
+        }
+        await tx.watch.update({
+          where: { id: watch.id },
+          data: {
+            lastCheckedAt: checkedAt,
+            nextCheckAt: new Date(
+              checkedAt.getTime() + current.checkInterval * 60_000,
+            ),
+          },
+        });
+      });
+    } catch (error) {
+      const failure =
+        error instanceof FetchFailure
+          ? error
+          : new FetchFailure(
+              "Monitoring failed; please try again later.",
+              true,
+            );
+      const retry = failure.retryable && attempt < 3;
+      const delay = Math.max(2000 * 2 ** (attempt - 1), failure.retryAfterMs);
+      await this.prisma.checkRun.updateMany({
+        where: { id: checkRunId, leaseOwner: owner },
+        data: {
+          status: retry ? CheckRunStatus.RETRYING : CheckRunStatus.FAILED,
+          error: failure.message.slice(0, 500),
+          leaseOwner: null,
+          leaseUntil: null,
+          nextAttemptAt: new Date(Date.now() + delay),
+          completedAt: retry ? null : new Date(),
+        },
+      });
+      if (retry) throw failure;
+      throw new FetchFailure(failure.message);
+    } finally {
+      clearInterval(heartbeat);
     }
-    const normalized = address.toLowerCase();
-    return normalized === '::1' || normalized.startsWith('fc') || normalized.startsWith('fd') || normalized.startsWith('fe80:');
+  }
+
+  private cancel(
+    id: string,
+    owner: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ) {
+    return tx.checkRun.updateMany({
+      where: { id, leaseOwner: owner },
+      data: {
+        status: CheckRunStatus.CANCELLED,
+        completedAt: new Date(),
+        leaseOwner: null,
+        leaseUntil: null,
+        error: "Watch settings changed or monitoring was paused.",
+      },
+    });
+  }
+
+  private async cleanup() {
+    const cutoff = new Date(
+      Date.now() - Number(process.env.HISTORY_RETENTION_DAYS ?? 90) * 86400_000,
+    );
+    const oldRuns = await this.prisma.checkRun.findMany({
+      where: { status: { notIn: ACTIVE }, completedAt: { lt: cutoff } },
+      select: { id: true },
+      take: 500,
+    });
+    await this.prisma.checkRun.deleteMany({
+      where: { id: { in: oldRuns.map((r) => r.id) } },
+    });
+    // Keep snapshots referenced by changes and the latest snapshot of each watch/revision.
+    await this.prisma
+      .$executeRaw`DELETE FROM "Snapshot" WHERE "id" IN (SELECT s."id" FROM "Snapshot" s WHERE s."capturedAt" < ${cutoff} AND NOT EXISTS (SELECT 1 FROM "Change" c WHERE c."oldSnapshotId" = s."id" OR c."newSnapshotId" = s."id") AND EXISTS (SELECT 1 FROM "Snapshot" n WHERE n."watchId" = s."watchId" AND n."revision" = s."revision" AND n."capturedAt" > s."capturedAt") LIMIT 500)`;
+    await this.prisma.runtimeHeartbeat.deleteMany({
+      where: { seenAt: { lt: new Date(Date.now() - 86400_000) } },
+    });
   }
 }

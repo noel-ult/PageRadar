@@ -9,13 +9,20 @@ import {
   PAUSE_WATCH_MUTATION,
   RESUME_WATCH_MUTATION,
 } from "@/graphql/mutations";
-import type { Watch } from "@/lib/types";
+
 import { formatDateTime, friendlyErrorMessage } from "@/lib/format";
-import { LoadingState, EmptyState, ErrorState } from "@/components/common/states";
+import {
+  LoadingState,
+  EmptyState,
+  ErrorState,
+} from "@/components/common/states";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { WatchStatusBadge } from "@/components/watches/WatchStatus";
 
 export default function WatchesPage() {
+  const [after, setAfter] = useState<string | null>(null);
   const { data, loading, error, refetch } = useQuery(WATCHES_QUERY, {
+    variables: { after },
     pollInterval: 10_000,
   });
 
@@ -25,8 +32,7 @@ export default function WatchesPage() {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const watches: Watch[] = (((data as any)?.watches ?? []) as Watch[]);
+  const watches = data?.watchesPage.nodes ?? [];
   const busy = pauseState.loading || resumeState.loading || deleteState.loading;
 
   async function doPause(id: string) {
@@ -60,7 +66,7 @@ export default function WatchesPage() {
     }
   }
 
-  if (loading) return <LoadingState message="Loading watches..." />;
+  if (loading && !data) return <LoadingState message="Loading watches..." />;
   if (error)
     return (
       <ErrorState
@@ -73,8 +79,12 @@ export default function WatchesPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between border-b border-zinc-800/80 pb-5">
         <div>
-          <h1 className="text-xl font-semibold text-white">Monitored Webpages</h1>
-          <p className="mt-0.5 text-xs text-zinc-400">All configured targets and check frequencies.</p>
+          <h1 className="text-xl font-semibold text-white">
+            Monitored Webpages
+          </h1>
+          <p className="mt-0.5 text-xs text-zinc-400">
+            All configured targets and check frequencies.
+          </p>
         </div>
         <Link
           href="/watches/new"
@@ -85,7 +95,10 @@ export default function WatchesPage() {
       </div>
 
       {actionError ? (
-        <div role="alert" className="rounded-lg border border-red-900/50 bg-red-950/30 p-2.5 text-xs text-red-300">
+        <div
+          role="alert"
+          className="rounded-lg border border-red-900/50 bg-red-950/30 p-2.5 text-xs text-red-300"
+        >
           {actionError}
         </div>
       ) : null}
@@ -112,9 +125,7 @@ export default function WatchesPage() {
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="text-sm font-semibold text-white">
-                    {w.name}
-                  </h2>
+                  <h2 className="text-sm font-semibold text-white">{w.name}</h2>
                   <a
                     href={w.url}
                     target="_blank"
@@ -165,38 +176,41 @@ export default function WatchesPage() {
                   Delete
                 </button>
               </div>
-              {confirmId === w.id ? (
-                <div
-                  role="alertdialog"
-                  aria-label="Confirm delete"
-                  className="mt-3 rounded-lg border border-red-900/50 bg-red-950/30 p-3"
-                >
-                  <p className="text-xs text-red-200">
-                    Are you sure you want to delete this watch?
-                  </p>
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setConfirmId(null)}
-                      className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-700"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      disabled={deleteState.loading}
-                      onClick={() => void doDelete(w.id)}
-                      className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-500 disabled:opacity-50"
-                    >
-                      {deleteState.loading ? "Deleting..." : "Delete"}
-                    </button>
-                  </div>
-                </div>
-              ) : null}
+              <ConfirmDialog
+                open={confirmId === w.id}
+                title={`Delete ${w.name}?`}
+                description="This permanently deletes the watch and its monitoring history."
+                busy={deleteState.loading}
+                error={actionError}
+                onCancel={() => setConfirmId(null)}
+                onConfirm={() => void doDelete(w.id)}
+              />
             </li>
           ))}
         </ul>
       )}
+      <div className="flex gap-3">
+        {after ? (
+          <button
+            type="button"
+            onClick={() => setAfter(null)}
+            className="rounded-lg border border-zinc-700 px-3 py-2 text-xs"
+          >
+            Latest watches
+          </button>
+        ) : null}
+        {data?.watchesPage.pageInfo.hasNextPage ? (
+          <button
+            type="button"
+            onClick={() =>
+              setAfter(data.watchesPage.pageInfo.endCursor ?? null)
+            }
+            className="rounded-lg border border-zinc-700 px-3 py-2 text-xs"
+          >
+            More watches
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

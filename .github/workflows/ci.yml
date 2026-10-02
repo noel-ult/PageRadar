@@ -1,0 +1,39 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request: { branches: [main] }
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: password, POSTGRES_DB: pageradar }
+        ports: ['5432:5432']
+        options: --health-cmd 'pg_isready -U postgres' --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: --health-cmd 'redis-cli ping' --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:password@localhost:5432/pageradar
+      DIRECT_URL: postgresql://postgres:password@localhost:5432/pageradar
+      JWT_SECRET: ci-only-placeholder-secret-for-isolated-tests
+      REDIS_URL: redis://localhost:6379
+      NODE_ENV: test
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm --workspace @pageradar/api run prisma:generate
+      - run: npm run graphql:generate
+      - run: git diff --exit-code -- graphql/generated.ts apps/api/src/schema.gql
+      - run: npm run typecheck && npm run lint && npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: npm run test:full
+      - run: npm run test:runtime
+      - run: npm run test:load

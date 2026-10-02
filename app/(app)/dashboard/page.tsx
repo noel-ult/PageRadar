@@ -4,52 +4,76 @@ import Link from "next/link";
 import { useQuery } from "@apollo/client/react";
 import {
   WATCHES_QUERY,
+  DASHBOARD_STATS_QUERY,
   RECENT_CHANGES_QUERY,
 } from "@/graphql/queries";
-import type { DashboardStats, Watch } from "@/lib/types";
-import { LoadingState, EmptyState, ErrorState } from "@/components/common/states";
+import type { Watch, ChangeSummary } from "@/lib/types";
+import {
+  LoadingState,
+  EmptyState,
+  ErrorState,
+} from "@/components/common/states";
 import { WatchCard } from "@/components/watches/WatchCard";
 import { ChangeCard } from "@/components/changes/ChangeCard";
 import { friendlyErrorMessage } from "@/lib/format";
 
+interface RawWatchItem {
+  id: string;
+  name?: string;
+  title?: string;
+  url: string;
+  isActive: boolean;
+  checkIntervalMinutes?: number;
+  lastCheckedAt?: string | null;
+  createdAt?: string;
+  latestChange?: ChangeSummary | null;
+}
+
+interface RawChangeItem extends ChangeSummary {
+  watchId?: string;
+  watch?: { id?: string; name?: string; url?: string } | null;
+}
+
 export default function DashboardPage() {
+  const statsQ = useQuery(DASHBOARD_STATS_QUERY, { pollInterval: 10_000 });
   const watchesQ = useQuery(WATCHES_QUERY, { pollInterval: 10_000 });
   const changesQ = useQuery(RECENT_CHANGES_QUERY, {
-    variables: { limit: 10 },
     pollInterval: 10_000,
   });
 
+  const rawWatches: RawWatchItem[] = watchesQ.data?.watchesPage.nodes ?? [];
+  const rawChanges: RawChangeItem[] = changesQ.data?.changesPage.nodes ?? [];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawWatches: any[] = ((watchesQ.data as any)?.watches ?? []) as any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rawChanges: any[] = ((changesQ.data as any)?.changes ?? []) as any[];
+  const changes = rawChanges
+    .map((c) => {
+      const matchedWatch = rawWatches.find(
+        (w) => w.id === c.watchId || w.id === c.watch?.id,
+      );
+      return {
+        ...c,
+        watch:
+          c.watch && c.watch.name && c.watch.url
+            ? { name: c.watch.name, url: c.watch.url }
+            : matchedWatch
+              ? {
+                  name:
+                    matchedWatch.name ?? matchedWatch.title ?? "Monitored Page",
+                  url: matchedWatch.url,
+                }
+              : null,
+      };
+    })
+    .slice(0, 5);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const changes = rawChanges.map((c: any) => {
-    const matchedWatch = rawWatches.find(
-      (w: any) => w.id === c.watchId || w.id === c.watch?.id
-    );
-    return {
-      ...c,
-      watch:
-        c.watch ??
-        (matchedWatch
-          ? { name: matchedWatch.name ?? matchedWatch.title, url: matchedWatch.url }
-          : null),
-    };
-  }).slice(0, 5);
-
-  const watches: Watch[] = rawWatches.map((w: any) => ({
+  const watches: Watch[] = rawWatches.map((w) => ({
     ...w,
     latestChange:
       w.latestChange ??
-      rawChanges.find((c: any) => c.watchId === w.id || c.watch?.id === w.id),
+      rawChanges.find((c) => c.watchId === w.id || c.watch?.id === w.id),
   })) as Watch[];
 
-
   const loading = watchesQ.loading || changesQ.loading;
-  const error = watchesQ.error ?? changesQ.error;
+  const error = watchesQ.error ?? changesQ.error ?? statsQ.error;
 
   if (loading && !watchesQ.data && !changesQ.data) {
     return <LoadingState message="Loading dashboard..." />;
@@ -62,25 +86,24 @@ export default function DashboardPage() {
         onRetry={() => {
           void watchesQ.refetch();
           void changesQ.refetch();
+          void statsQ.refetch();
         }}
       />
     );
   }
 
   const activeWatches =
+    statsQ.data?.dashboardStats.activeWatches ??
     watches.filter((w) => w.isActive).length;
-  const important = changes.filter((c) =>
-    typeof c.importance === "number"
-      ? c.importance >= 75
-      : ["HIGH", "CRITICAL"].includes(c.importance)
-  );
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between border-b border-zinc-800/80 pb-5">
         <div>
           <h1 className="text-xl font-semibold text-white">Dashboard</h1>
-          <p className="mt-0.5 text-xs text-zinc-400">Overview of your monitored pages and recent changes.</p>
+          <p className="mt-0.5 text-xs text-zinc-400">
+            Overview of your monitored pages and recent changes.
+          </p>
         </div>
         <Link
           href="/watches/new"
@@ -90,18 +113,29 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <section aria-label="Summary" className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <section
+        aria-label="Summary"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+      >
         {[
           { label: "Active Watches", value: activeWatches },
-          { label: "Recent Changes", value: changes.length },
-          { label: "Important Changes", value: important.length },
+          {
+            label: "Changes this week",
+            value: statsQ.data?.dashboardStats.recentChanges ?? "—",
+          },
+          {
+            label: "Important Changes",
+            value: statsQ.data?.dashboardStats.importantChanges ?? "—",
+          },
         ].map((item) => (
           <div
             key={item.label}
             className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-5"
           >
             <p className="text-xs font-medium text-zinc-400">{item.label}</p>
-            <p className="mt-2 text-3xl font-semibold text-white">{item.value}</p>
+            <p className="mt-2 text-3xl font-semibold text-white">
+              {item.value}
+            </p>
           </div>
         ))}
       </section>
@@ -109,7 +143,10 @@ export default function DashboardPage() {
       <section aria-label="Recent watches" className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-white">Recent Watches</h2>
-          <Link href="/watches" className="text-xs text-zinc-400 hover:text-white transition">
+          <Link
+            href="/watches"
+            className="text-xs text-zinc-400 hover:text-white transition"
+          >
             View all →
           </Link>
         </div>

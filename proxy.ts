@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-const TOKEN_KEY = "pageradar_token";
+const TOKEN_KEY = "pageradar_session";
 
-const PROTECTED = ["/dashboard", "/watches", "/changes"];
+const PROTECTED = ["/dashboard", "/watches", "/changes", "/notifications"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED.some(
-    (p) => pathname === p || pathname.startsWith(p + "/")
+    (p) => pathname === p || pathname.startsWith(p + "/"),
   );
   if (!isProtected) return NextResponse.next();
   const token = request.cookies.get(TOKEN_KEY)?.value;
@@ -20,5 +20,10 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/watches/:path*", "/changes/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/watches/:path*",
+    "/changes/:path*",
+    "/notifications/:path*",
+  ],
 };

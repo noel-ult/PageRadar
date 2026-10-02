@@ -1,2 +1,75 @@
-import { ForbiddenException } from '@nestjs/common'; import { WatchesService } from './watches.service';
-describe('WatchesService ownership', () => { const prisma: any = { watch: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn(), findMany: jest.fn() } }; const service = new WatchesService(prisma); const id = 'bdb53988-85d2-4fa6-a0ff-e6755a99779f'; beforeEach(() => jest.clearAllMocks()); it('creates a watch for the authenticated user', async () => { prisma.watch.create.mockResolvedValue({ userId: 'owner' }); await service.create('owner', { url: 'https://example.com', title: 'Example', checkInterval: 300 }); expect(prisma.watch.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ userId: 'owner' }) })); }); it('blocks another user from reading or modifying a watch', async () => { prisma.watch.findUnique.mockResolvedValue({ id, userId: 'owner' }); await expect(service.getOwned(id, 'other')).rejects.toBeInstanceOf(ForbiddenException); await expect(service.update(id, 'other', { title: 'Nope' })).rejects.toBeInstanceOf(ForbiddenException); }); it('deletes an owned watch', async () => { prisma.watch.findUnique.mockResolvedValue({ id, userId: 'owner' }); prisma.watch.delete.mockResolvedValue({ id }); await expect(service.remove(id, 'owner')).resolves.toBe(true); }); });
+import { ForbiddenException } from "@nestjs/common";
+import { WatchesService } from "./watches.service";
+describe("WatchesService ownership and preferences", () => {
+  const prisma: any = {
+    $queryRaw: jest.fn(),
+    watch: {
+      findUnique: jest.fn(),
+      findFirstOrThrow: jest.fn(),
+      count: jest.fn().mockResolvedValue(0),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    userInterest: { findMany: jest.fn().mockResolvedValue([]) },
+    checkRun: { updateMany: jest.fn() },
+  };
+  prisma.$transaction = async (callback: any) => callback(prisma);
+  const validator: any = { validateAndResolve: jest.fn() };
+  const service = new WatchesService(prisma, validator);
+  beforeEach(() => jest.clearAllMocks());
+  it("saves per-watch preferences for the authenticated user", async () => {
+    await service.create("owner", {
+      url: "https://example.com",
+      title: " Example ",
+      checkInterval: 360,
+      interests: ["PRICE"],
+      minimumImportance: 65,
+    });
+    expect(prisma.watch.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          userId: "owner",
+          title: "Example",
+          interests: ["PRICE"],
+          minimumImportance: 65,
+        }),
+      }),
+    );
+  });
+  it("blocks another user from modifying a watch", async () => {
+    prisma.watch.findUnique.mockResolvedValue({ userId: "owner" });
+    await expect(
+      service.update("w1", "other", { title: "Nope" }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+  it("rejects whitespace-only names", async () => {
+    await expect(
+      service.create("owner", {
+        url: "https://example.com",
+        title: "  ",
+        checkInterval: 10,
+      }),
+    ).rejects.toThrow("blank");
+  });
+  it("starts a new baseline when extraction settings change", async () => {
+    const watch = {
+      userId: "owner",
+      url: "https://example.com",
+      includeSelector: null,
+      excludeSelector: null,
+    };
+    prisma.watch.findUnique.mockResolvedValue(watch);
+    prisma.watch.findFirstOrThrow.mockResolvedValue(watch);
+    await service.update("w1", "owner", { includeSelector: "main" });
+    expect(prisma.watch.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          revision: { increment: 1 },
+          lastCheckedAt: null,
+        }),
+      }),
+    );
+    expect(prisma.checkRun.updateMany).toHaveBeenCalled();
+  });
+});

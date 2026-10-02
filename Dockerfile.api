@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # --- Base ---
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl curl
 
@@ -14,6 +14,7 @@ RUN npm ci
 COPY package.json package-lock.json ./
 COPY apps/api ./apps/api
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+ENV DIRECT_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npm --prefix apps/api run prisma:generate
 RUN npm --workspace=@pageradar/api run build
 
@@ -40,4 +41,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD curl -f http://localhost:3001/health || exit 1
 
-CMD ["sh", "-c", "apps/api/node_modules/.bin/prisma migrate deploy --schema=apps/api/prisma/schema.prisma && node apps/api/dist/src/main.js"]
+CMD ["node", "apps/api/dist/src/main.js"]

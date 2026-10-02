@@ -11,3 +11,9 @@ body {
   background: #27272a;
   color: #fafafa;
 }
+
+:root { color-scheme: dark; scrollbar-color: #52525b #09090b; scrollbar-width: thin; }
+:focus-visible { outline: 2px solid #2dd4bf !important; outline-offset: 3px; }
+button:not(:disabled) { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }

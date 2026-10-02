@@ -1,51 +1,20 @@
 "use client";
-
-const TOKEN_KEY = "pageradar_token";
-
-export function getToken(): string | null {
-  if (typeof window === "undefined") return null;
+export async function clearToken() {
+  const response = await fetch("/api/session", {
+    method: "DELETE",
+    credentials: "same-origin",
+  });
+  if (!response.ok) throw new Error("Unable to sign out. Try again.");
   try {
-    return window.localStorage.getItem(TOKEN_KEY);
+    window.localStorage.removeItem("pageradar_token");
   } catch {
-    return null;
+    /* storage may be disabled */
   }
 }
-
-function readCookie(name: string): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(
-    new RegExp("(?:^|; )" + name.replace(/[.$?*|{}()[\]\\/+^]/g, "\\$&") + "=([^;]*)")
-  );
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
-export function getTokenAnywhere(): string | null {
-  return getToken() ?? readCookie(TOKEN_KEY);
-}
-
-export function setToken(token: string) {
+export function clearLegacyToken() {
   try {
-    window.localStorage.setItem(TOKEN_KEY, token);
+    window.localStorage.removeItem("pageradar_token");
   } catch {
-    // ignore
+    /* storage may be disabled */
   }
-  // Mirror into a cookie so Next.js middleware (server) can protect routes.
-  document.cookie = `${TOKEN_KEY}=${encodeURIComponent(
-    token
-  )}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
 }
-
-export function clearToken() {
-  try {
-    window.localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    // ignore
-  }
-  document.cookie = `${TOKEN_KEY}=; path=/; max-age=0; SameSite=Lax`;
-}
-
-export function isAuthenticated(): boolean {
-  return getTokenAnywhere() != null;
-}
-
-export { TOKEN_KEY };
