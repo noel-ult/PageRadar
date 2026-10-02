@@ -32,6 +32,12 @@ export default function NotificationsPage() {
   return (
     <div className="grid gap-6">
       <h1 className="text-xl font-semibold">Notifications</h1>
+      <Link
+        href="/notifications/settings"
+        className="w-fit text-sm text-teal-300 underline"
+      >
+        Email notification settings
+      </Link>
       {error ? (
         <RefreshError
           onRetry={() => {

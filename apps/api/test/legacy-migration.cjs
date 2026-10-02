@@ -59,6 +59,37 @@ module.exports = async function verifyLegacyMigration(databaseUrl) {
     await migrate("20261002000000_reliable_beta");
     await migrate("20261002000001_beta_backfill");
     await migrate("20261002000002_runtime_security_and_preferences");
+    const pendingEmail = randomUUID();
+    await legacy.query(
+      `INSERT INTO "Notification" (id,"userId",message,status) VALUES ($1,$2,'Pending legacy email','PENDING')`,
+      [pendingEmail, user],
+    );
+    await migrate("20261002123000_email_alerts");
+    assert.equal(
+      (
+        await legacy.query('SELECT status FROM "Notification" WHERE id=$1', [
+          pendingEmail,
+        ])
+      ).rows[0].status,
+      "DISABLED",
+    );
+    assert.equal(
+      (
+        await legacy.query(
+          'SELECT "emailAlertsEnabled" FROM "User" WHERE id=$1',
+          [user],
+        )
+      ).rows[0].emailAlertsEnabled,
+      false,
+    );
+    assert.equal(
+      (
+        await legacy.query(
+          "SELECT count(*)::int AS count FROM pg_class WHERE relname IN ('EmailActionToken','EmailWebhookEvent') AND relrowsecurity",
+        )
+      ).rows[0].count,
+      2,
+    );
     assert.deepEqual(
       (await legacy.query('SELECT interests FROM "Watch" WHERE id=$1', [watch]))
         .rows[0].interests,
@@ -98,7 +129,9 @@ module.exports = async function verifyLegacyMigration(databaseUrl) {
       "CRITICAL",
     );
     const alerts = (
-      await legacy.query('SELECT channel,"changeId" FROM "Notification"')
+      await legacy.query(
+        `SELECT channel,"changeId" FROM "Notification" WHERE channel='IN_APP'`,
+      )
     ).rows;
     assert.equal(alerts.length, 2);
     assert.ok(alerts.every((row) => row.channel === "IN_APP"));

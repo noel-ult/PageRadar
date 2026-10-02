@@ -186,8 +186,18 @@ export function WatchForm({ watch }: { watch?: Watch }) {
           onChange={(e) => setEmailEnabled(e.target.checked)}
           className="accent-teal-400"
         />
-        Send email alerts when email delivery is available
+        Send email alerts for this watch
       </label>
+      <p className="text-xs text-zinc-400">
+        Email also requires a verified address and account opt-in in{" "}
+        <Link
+          href="/notifications/settings"
+          className="text-teal-300 underline"
+        >
+          notification settings
+        </Link>
+        .
+      </p>
       <details className="rounded-lg border border-zinc-800 p-4">
         <summary className="cursor-pointer text-sm">
           Choose page sections

@@ -124,6 +124,8 @@ type NotificationModel {
   message: String!
   sentAt: DateTime
   createdAt: DateTime!
+  purpose: EmailPurpose!
+  deliveredAt: DateTime
 }
 
 enum NotificationChannel {
@@ -138,6 +140,23 @@ enum NotificationStatus {
   ACCEPTED
   DELIVERED
   DISABLED
+  BOUNCED
+  COMPLAINED
+}
+
+enum EmailPurpose {
+  CHANGE_ALERT
+  VERIFICATION
+  TEST
+}
+
+type EmailSettings {
+  email: String!
+  verifiedAt: DateTime
+  enabled: Boolean!
+  available: Boolean!
+  suppressed: Boolean!
+  suppressionReason: String
 }
 
 type NotificationConnection {
@@ -191,6 +210,8 @@ type Query {
   snapshotsPage(first: Int! = 25, after: String, watchId: ID!): SnapshotConnection!
   userInterests: [UserInterestModel!]!
   notifications: [NotificationModel!]!
+  emailSettings: EmailSettings!
+  emailDeliveriesPage(first: Int! = 25, after: String): NotificationConnection!
   unreadNotificationCount: Int!
   notificationsPage(first: Int! = 25, after: String): NotificationConnection!
   checkRun(id: ID!): CheckRunModel!
@@ -213,8 +234,13 @@ type Mutation {
   deleteWatch(id: ID!): Boolean!
   toggleWatch(id: ID!, isActive: Boolean!): WatchModel!
   updateInterests(inputs: [InterestInput!]!): [UserInterestModel!]!
+  requestEmailVerification: Boolean!
+  setEmailAlertsEnabled(enabled: Boolean!): EmailSettings!
+  sendTestEmail: NotificationModel!
   markNotificationRead(id: ID!): Boolean!
   markAllNotificationsRead: Boolean!
+  confirmEmailVerification(token: String!): Boolean!
+  unsubscribeEmailAlerts(token: String!): Boolean!
   checkWatchNow(id: ID!): CheckRunModel!
   previewWatch(input: CreateWatchInput!): ContentPreview!
 }

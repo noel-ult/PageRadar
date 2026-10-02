@@ -284,6 +284,7 @@ export class MonitoringService
               capturedAt: checkedAt,
             },
           });
+          const emailChanges = [];
           for (const event of events) {
             const c = event.result;
             const change = await tx.change.create({
@@ -308,8 +309,8 @@ export class MonitoringService
                 detectedAt: checkedAt,
               },
             });
-            if (c.isMeaningful)
-              await this.notifications.createForChange(
+            if (c.isMeaningful) {
+              const eligible = await this.notifications.createForChange(
                 {
                   userId: watch.userId,
                   changeId: change.id,
@@ -323,7 +324,15 @@ export class MonitoringService
                 },
                 tx,
               );
+              if (eligible) emailChanges.push(change);
+            }
           }
+          await this.notifications.createForCheck(
+            current,
+            checkRunId,
+            emailChanges,
+            tx,
+          );
         }
         await tx.watch.update({
           where: { id: watch.id },

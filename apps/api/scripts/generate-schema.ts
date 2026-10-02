@@ -13,6 +13,7 @@ import { ChangesResolver } from "../src/changes/changes.resolver";
 import { SnapshotsResolver } from "../src/snapshots/snapshots.resolver";
 import { InterestsResolver } from "../src/interests/interests.resolver";
 import { NotificationsResolver } from "../src/notifications/notifications.resolver";
+import { EmailActionsResolver } from "../src/notifications/email-actions.resolver";
 import { MonitoringResolver } from "../src/monitoring/monitoring.resolver";
 async function main() {
   const app = await NestFactory.createApplicationContext(
@@ -30,6 +31,7 @@ async function main() {
         SnapshotsResolver,
         InterestsResolver,
         NotificationsResolver,
+        EmailActionsResolver,
         MonitoringResolver,
       ]);
     writeFileSync("src/schema.gql", `${printSchema(schema)}\n`);

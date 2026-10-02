@@ -21,6 +21,50 @@ import type {
 } from "./generated";
 import { gql } from "@apollo/client";
 import { CHANGE_SUMMARY_FRAGMENT, WATCH_CARD_FRAGMENT } from "./fragments";
+import type {
+  EmailSettingsQuery,
+  EmailSettingsQueryVariables,
+  EmailDeliveriesQuery,
+  EmailDeliveriesQueryVariables,
+} from "./generated";
+
+export const EMAIL_SETTINGS_QUERY: TypedDocumentNode<
+  EmailSettingsQuery,
+  EmailSettingsQueryVariables
+> = gql`
+  query EmailSettings {
+    emailSettings {
+      email
+      verifiedAt
+      enabled
+      available
+      suppressed
+      suppressionReason
+    }
+  }
+`;
+export const EMAIL_DELIVERIES_QUERY: TypedDocumentNode<
+  EmailDeliveriesQuery,
+  EmailDeliveriesQueryVariables
+> = gql`
+  query EmailDeliveries($after: String) {
+    emailDeliveriesPage(first: 25, after: $after) {
+      nodes {
+        id
+        message
+        purpose
+        status
+        createdAt
+        sentAt
+        deliveredAt
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+`;
 
 export const ME_QUERY: TypedDocumentNode<MeQuery, MeQueryVariables> = gql`
   query Me {

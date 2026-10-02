@@ -151,3 +151,66 @@ export const MARK_ALL_NOTIFICATIONS_READ_MUTATION: TypedDocumentNode<
     markAllNotificationsRead
   }
 `;
+import type {
+  RequestEmailVerificationMutation,
+  RequestEmailVerificationMutationVariables,
+  ConfirmEmailVerificationMutation,
+  ConfirmEmailVerificationMutationVariables,
+  SetEmailAlertsMutation,
+  SetEmailAlertsMutationVariables,
+  SendTestEmailMutation,
+  SendTestEmailMutationVariables,
+  UnsubscribeEmailAlertsMutation,
+  UnsubscribeEmailAlertsMutationVariables,
+} from "./generated";
+
+export const REQUEST_EMAIL_VERIFICATION: TypedDocumentNode<
+  RequestEmailVerificationMutation,
+  RequestEmailVerificationMutationVariables
+> = gql`
+  mutation RequestEmailVerification {
+    requestEmailVerification
+  }
+`;
+export const CONFIRM_EMAIL_VERIFICATION: TypedDocumentNode<
+  ConfirmEmailVerificationMutation,
+  ConfirmEmailVerificationMutationVariables
+> = gql`
+  mutation ConfirmEmailVerification($token: String!) {
+    confirmEmailVerification(token: $token)
+  }
+`;
+export const SET_EMAIL_ALERTS: TypedDocumentNode<
+  SetEmailAlertsMutation,
+  SetEmailAlertsMutationVariables
+> = gql`
+  mutation SetEmailAlerts($enabled: Boolean!) {
+    setEmailAlertsEnabled(enabled: $enabled) {
+      email
+      verifiedAt
+      enabled
+      available
+      suppressed
+      suppressionReason
+    }
+  }
+`;
+export const SEND_TEST_EMAIL: TypedDocumentNode<
+  SendTestEmailMutation,
+  SendTestEmailMutationVariables
+> = gql`
+  mutation SendTestEmail {
+    sendTestEmail {
+      id
+      status
+    }
+  }
+`;
+export const UNSUBSCRIBE_EMAIL_ALERTS: TypedDocumentNode<
+  UnsubscribeEmailAlertsMutation,
+  UnsubscribeEmailAlertsMutationVariables
+> = gql`
+  mutation UnsubscribeEmailAlerts($token: String!) {
+    unsubscribeEmailAlerts(token: $token)
+  }
+`;

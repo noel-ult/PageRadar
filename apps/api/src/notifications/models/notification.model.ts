@@ -1,5 +1,9 @@
 import { Field, ID, ObjectType, registerEnumType } from "@nestjs/graphql";
-import { NotificationChannel, NotificationStatus } from "@prisma/client";
+import {
+  EmailPurpose,
+  NotificationChannel,
+  NotificationStatus,
+} from "@prisma/client";
 import { GraphQLISODateTime } from "@nestjs/graphql";
 registerEnumType(NotificationChannel, { name: "NotificationChannel" });
 registerEnumType(NotificationStatus, { name: "NotificationStatus" });
@@ -13,4 +17,7 @@ export class NotificationModel {
   @Field() message!: string;
   @Field(() => GraphQLISODateTime, { nullable: true }) sentAt!: Date | null;
   @Field(() => GraphQLISODateTime) createdAt!: Date;
+  @Field(() => EmailPurpose) purpose!: EmailPurpose;
+  @Field(() => GraphQLISODateTime, { nullable: true })
+  deliveredAt!: Date | null;
 }

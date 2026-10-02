@@ -41,6 +41,17 @@ enum NotificationStatus {
   ACCEPTED
   DELIVERED
   DISABLED
+  BOUNCED
+  COMPLAINED
+}
+enum EmailPurpose {
+  CHANGE_ALERT
+  VERIFICATION
+  TEST
+}
+enum EmailTokenPurpose {
+  VERIFY
+  UNSUBSCRIBE
 }
 enum CheckRunStatus {
   QUEUED
@@ -63,6 +74,11 @@ model User {
   watches Watch[]
   interests UserInterest[]
   notifications Notification[]
+  emailVerifiedAt DateTime?
+  emailAlertsEnabled Boolean @default(false)
+  emailSuppressedAt DateTime?
+  emailSuppressionReason String?
+  emailTokens EmailActionToken[]
 }
 
 model Watch {
@@ -165,12 +181,43 @@ model Notification {
   error String?
   providerId String?
   payload Json @default("{}")
+  purpose EmailPurpose @default(CHANGE_ALERT)
+  checkRunId String? @db.Uuid
+  watchId String? @db.Uuid
+  deliveredAt DateTime?
+  firstAttemptAt DateTime?
+  lastProviderEventAt DateTime?
+  providerMessage Json?
   createdAt DateTime @default(now())
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   change Change? @relation(fields: [changeId], references: [id], onDelete: SetNull)
   @@index([userId, createdAt])
   @@unique([userId, changeId, channel])
   @@index([status, nextAttemptAt])
+  @@unique([userId, checkRunId, channel])
+  @@unique([providerId])
+}
+
+model EmailActionToken {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  tokenHash String @unique
+  purpose EmailTokenPurpose
+  expiresAt DateTime?
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, purpose])
+}
+
+model EmailWebhookEvent {
+  id String @id
+  providerId String
+  type String
+  occurredAt DateTime
+  receivedAt DateTime @default(now())
+  processedAt DateTime?
+  @@index([providerId, processedAt])
 }
 
 model CheckRun {

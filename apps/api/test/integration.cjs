@@ -56,6 +56,10 @@ async function main() {
       NODE_ENV: "test",
       RUNTIME_ROLE: "all",
       RESEND_API_KEY: "integration-only",
+      EMAIL_FROM: "alerts@notify.example.com",
+      RESEND_WEBHOOK_SECRET:
+        "whsec_" + Buffer.from("integration-signing-secret").toString("base64"),
+      FRONTEND_URL: "https://pageradar.example.com",
       MAX_WATCHES_PER_USER: "1100",
     });
     const migrated = spawnSync(
@@ -96,7 +100,7 @@ async function main() {
         },
       })
       .compile();
-    app = module.createNestApplication({ logger: false });
+    app = module.createNestApplication({ logger: false, rawBody: true });
     app.useGlobalPipes(
       new ValidationPipe({
         transform: true,
@@ -146,12 +150,71 @@ async function main() {
       if (String(url) === "https://api.resend.com/emails") {
         delivered++;
         assert.ok(options.headers["Idempotency-Key"]);
-        return new Response(JSON.stringify({ id: "test-provider-id" }), {
-          status: 200,
-        });
+        return new Response(
+          JSON.stringify({ id: `test-provider-${delivered}` }),
+          {
+            status: 200,
+          },
+        );
       }
       return rootFetch(url, options);
     };
+    const { EmailService } = require("../dist/src/notifications/email.service");
+    const emailService = app.get(EmailService);
+    assert.equal(
+      (await gql("{emailSettings{enabled verifiedAt available}}")).data
+        .emailSettings.enabled,
+      false,
+    );
+    assert.ok(
+      (await gql("mutation{setEmailAlertsEnabled(enabled:true){enabled}}"))
+        .errors,
+    );
+    await gql("mutation{requestEmailVerification}");
+    const verificationMessage = await prisma.notification.findFirst({
+      where: { userId, purpose: "VERIFICATION" },
+    });
+    const verifyToken = verificationMessage.providerMessage.text.match(
+      /#token=([A-Za-z0-9_-]{43})/,
+    )[1];
+    assert.notEqual(
+      (await prisma.emailActionToken.findFirst({ where: { userId } }))
+        .tokenHash,
+      verifyToken,
+    );
+    await emailService.deliver(verificationMessage.id);
+    const confirmations = await Promise.all(
+      [1, 2].map(() =>
+        gql(
+          "mutation($token:String!){confirmEmailVerification(token:$token)}",
+          { token: verifyToken },
+          "",
+        ),
+      ),
+    );
+    assert.equal(
+      confirmations.filter((r) => r.data?.confirmEmailVerification).length,
+      1,
+      "Verification must consume the token once even under concurrent requests",
+    );
+    assert.ok(
+      (
+        await gql(
+          "mutation($token:String!){confirmEmailVerification(token:$token)}",
+          { token: verifyToken },
+          "",
+        )
+      ).errors,
+    );
+    assert.equal(
+      (await gql("{emailSettings{enabled}}")).data.emailSettings.enabled,
+      false,
+      "Verification must not imply opt-in",
+    );
+    assert.ok(
+      (await gql("mutation{setEmailAlertsEnabled(enabled:true){enabled}}")).data
+        .setEmailAlertsEnabled.enabled,
+    );
     async function manual() {
       const result = await gql(
         "mutation($id:ID!){checkWatchNow(id:$id){id status}}",
@@ -200,7 +263,169 @@ async function main() {
           },
         })),
     );
-    assert.equal(delivered, 1);
+    assert.equal(
+      delivered,
+      2,
+      "One verification message and one grouped alert",
+    );
+    const alert = await prisma.notification.findFirst({
+      where: { userId, checkRunId: changeRun, channel: "EMAIL" },
+    });
+    assert.ok(alert);
+    const unsubscribeToken = alert.providerMessage.text.match(
+      /Unsubscribe: .*#token=([A-Za-z0-9_-]{43})/,
+    )[1];
+    const { Webhook } = require("standardwebhooks");
+    async function callback(
+      type,
+      id,
+      occurredAt = new Date(),
+      providerId = alert.providerId,
+    ) {
+      const body = JSON.stringify({
+        type,
+        created_at: occurredAt.toISOString(),
+        data: { email_id: providerId },
+      });
+      const timestamp = new Date();
+      return rootFetch(`http://127.0.0.1:${port}/email/webhook`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "svix-id": id,
+          "svix-timestamp": String(Math.floor(timestamp.getTime() / 1000)),
+          "svix-signature": new Webhook(process.env.RESEND_WEBHOOK_SECRET).sign(
+            id,
+            timestamp,
+            body,
+          ),
+        },
+        body,
+      });
+    }
+    assert.equal(
+      (await callback("email.delivered", "delivered-1")).status,
+      200,
+    );
+    assert.equal(
+      (await callback("email.delivered", "delivered-1")).status,
+      200,
+    );
+    assert.equal(
+      (await prisma.notification.findUnique({ where: { id: alert.id } }))
+        .status,
+      "DELIVERED",
+    );
+    assert.equal(
+      await prisma.emailWebhookEvent.count({ where: { id: "delivered-1" } }),
+      1,
+    );
+    assert.equal(
+      (
+        await rootFetch(`http://127.0.0.1:${port}/email/webhook`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: "{}",
+        })
+      ).status,
+      400,
+    );
+    const queued = (await gql("mutation{sendTestEmail{id}}")).data.sendTestEmail
+      .id;
+    const pendingAlert = await prisma.notification.create({
+      data: {
+        userId,
+        watchId,
+        channel: "EMAIL",
+        message: "Queued alert",
+        providerMessage: alert.providerMessage,
+      },
+    });
+    // GET requests from link scanners must not modify preferences.
+    assert.equal(
+      (
+        await rootFetch(
+          `http://127.0.0.1:${port}/email/unsubscribe?token=${unsubscribeToken}`,
+        )
+      ).status,
+      404,
+    );
+    assert.equal(
+      (await prisma.user.findUnique({ where: { id: userId } }))
+        .emailAlertsEnabled,
+      true,
+    );
+    const oneClick = await rootFetch(
+      `http://127.0.0.1:${port}/email/unsubscribe?token=${unsubscribeToken}`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: "List-Unsubscribe=One-Click",
+      },
+    );
+    assert.equal(oneClick.status, 200);
+    await emailService.deliver(pendingAlert.id);
+    assert.equal(
+      (await prisma.notification.findUnique({ where: { id: pendingAlert.id } }))
+        .status,
+      "DISABLED",
+    );
+    assert.equal(delivered, 2);
+    await gql("mutation{setEmailAlertsEnabled(enabled:true){enabled}}");
+    // Early callbacks are retained until the corresponding submission is persisted.
+    assert.equal(
+      (
+        await callback(
+          "email.delivered",
+          "early-1",
+          new Date(),
+          "early-provider",
+        )
+      ).status,
+      200,
+    );
+    const earlyItem = await prisma.notification.create({
+      data: {
+        userId,
+        channel: "EMAIL",
+        message: "Early callback",
+        status: "ACCEPTED",
+        providerId: "early-provider",
+      },
+    });
+    await prisma.notification.update({
+      where: { id: queued },
+      data: { nextAttemptAt: new Date(Date.now() + 3600000) },
+    });
+    await emailService.dispatchDue();
+    assert.equal(
+      (await prisma.notification.findUnique({ where: { id: earlyItem.id } }))
+        .status,
+      "DELIVERED",
+    );
+    await Promise.all([
+      callback("email.bounced", "bounce-1"),
+      callback("email.delivered", "late-delivery", new Date(Date.now() + 1000)),
+    ]);
+    const suppressed = await prisma.user.findUnique({ where: { id: userId } });
+    assert.ok(suppressed.emailSuppressedAt);
+    assert.equal(suppressed.emailAlertsEnabled, false);
+    assert.equal(
+      (await prisma.notification.findUnique({ where: { id: alert.id } }))
+        .status,
+      "BOUNCED",
+    );
+    assert.ok(
+      (await gql("mutation{setEmailAlertsEnabled(enabled:true){enabled}}"))
+        .errors,
+    );
+    assert.equal(
+      (await prisma.notification.findUnique({ where: { id: queued } })).status,
+      "DISABLED",
+    );
+    console.log(
+      "PASS: verified opt-in, single-use token, signed and duplicate/early/out-of-order webhooks, unsubscribe scanners, queued cancellation and bounce suppression.",
+    );
     const notifications = await gql(
       "{notifications{id readAt} unreadNotificationCount}",
     );
@@ -233,6 +458,16 @@ async function main() {
       other.data.register.accessToken,
     );
     assert.ok(denied.errors);
+    assert.equal(
+      (
+        await gql(
+          "{emailDeliveriesPage{nodes{id}}}",
+          {},
+          other.data.register.accessToken,
+        )
+      ).data.emailDeliveriesPage.nodes.length,
+      0,
+    );
     const security = await gql(
       'mutation{createWatch(input:{url:"http://169.254.169.254/",title:"Blocked",checkInterval:60}){id}}',
     );

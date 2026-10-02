@@ -39,15 +39,13 @@ describe("Monitoring pipeline", () => {
       },
       checkRun: {
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        findUniqueOrThrow: jest
-          .fn()
-          .mockResolvedValue({
-            id: "r1",
-            watch,
-            revision: 1,
-            manual: true,
-            attempts: 1,
-          }),
+        findUniqueOrThrow: jest.fn().mockResolvedValue({
+          id: "r1",
+          watch,
+          revision: 1,
+          manual: true,
+          attempts: 1,
+        }),
         findFirst: jest.fn(),
         count: jest.fn().mockResolvedValue(0),
         create: jest.fn().mockResolvedValue({ id: "r1", status: "QUEUED" }),
@@ -60,7 +58,10 @@ describe("Monitoring pipeline", () => {
     };
     prisma.$transaction = jest.fn(async (callback: any) => callback(prisma));
     queue = { enqueue: jest.fn() };
-    notifications = { createForChange: jest.fn() };
+    notifications = {
+      createForChange: jest.fn().mockResolvedValue(true),
+      createForCheck: jest.fn(),
+    };
     fetcher = {
       fetchPage: jest
         .fn()

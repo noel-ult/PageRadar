@@ -11,7 +11,7 @@ PageRadar watches important webpages and explains what changed, why it matters, 
 - Extract headings, ordinary text, links and document destinations; suppress boilerplate, tracking parameters, copyright and rendering-clock noise.
 - Establish a baseline, detect section changes and multiple events, classify deadlines, eligibility, status, prices, requirements, announcements, documents and links. Exact dates with a year can produce factual extension summaries.
 - View paginated check history, failures/retries, before/after evidence, severity, confidence and affected sections.
-- Create in-app alerts and maintain unread state. Email delivery has a durable queue, retries, escaped content and provider idempotency keys. Missing credentials produce `DISABLED`; successful provider submission produces `ACCEPTED`, not a delivery claim.
+- Create in-app alerts and maintain unread state. Email alerts require verified recipients and explicit account opt-in. Qualifying changes from one check share one message. Delivery uses durable queues, retries, escaped content and provider idempotency keys; signed callbacks track delivery, bounces and complaints.
 
 ## Local development
 
@@ -65,7 +65,7 @@ Scheduler → pending email deliveries → Redis/BullMQ → email worker
 
 ## Optional providers
 
-Set `RESEND_API_KEY` and a verified `EMAIL_FROM` sender to enable email submission. Provider acceptance is tracked; bounce/delivery callbacks are a later extension. In-app alerts work independently.
+Email configuration is optional: missing configuration leaves in-app alerts working and shows email as unavailable. See [email setup and operations](docs/email-notifications.md) for Resend, DNS, Dokploy environment variables, webhook setup, verification and rollout. Existing users start with email alerts off; old queued alerts are disabled during migration. No backlog is sent on activation.
 
 Semantic classification is opt-in: set `LLM_ENABLED=true`, `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` and optionally `LLM_DAILY_CALL_LIMIT` (default 100). Only ambiguous meaningful changes use it; deterministic changes do not. Webpage text is isolated as untrusted user data with fixed system instructions, bounded samples, a timeout, output validation and a shared daily budget. Classification cannot execute webpage instructions or use tools. Failure falls back to heuristics.
 
@@ -120,4 +120,4 @@ Integration tests use isolated temporary databases and ports 55432/56379; browse
 
 ## Scope after the beta
 
-JavaScript browser rendering, full-page PDF/file monitoring, signed user webhooks, provider delivery callbacks, account recovery/email verification, billing and high-scale capacity tuning remain future work. Pages requiring login or browser challenges produce an explicit failure and preserve their baseline. Ambiguous dates are shown as evidence without inventing a time interval.
+JavaScript browser rendering, full-page PDF/file monitoring, signed user webhooks, account recovery, billing and high-scale capacity tuning remain future work. Pages requiring login or browser challenges produce an explicit failure and preserve their baseline. Ambiguous dates are shown as evidence without inventing a time interval.

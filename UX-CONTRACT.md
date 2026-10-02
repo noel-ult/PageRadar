@@ -19,3 +19,13 @@ Deletion confirms the named watch and loss of monitoring history. Cancel is init
 Page content and summaries are untrusted plain text. External email is queued transactionally; provider acceptance is separate from delivery. No global webhook is used for private user alerts.
 
 Read views revalidate on navigation and refresh in the background every 5–15 seconds. Hidden or offline tabs pause polling; returning to the tab or reconnecting revalidates active queries. Refresh failures keep the last loaded data visible with a retry notice. Settings load fresh before opening the form and never refresh away unsaved input. These refreshes read monitoring results; webpage checks still follow each watch’s configured schedule.
+
+## Email alerts
+
+`app/(app)/notifications/settings/page.tsx` owns global email opt-in, verification requests, test messages and paginated delivery history. GraphQL ownership and persisted User/Notification records are authoritative. Existing watch forms own category, importance and per-watch email preferences. Read queries use the established background refresh; settings mutations explicitly refetch related records.
+
+`components/notifications/EmailAction.tsx` owns public verification and unsubscribe confirmation. Tokens arrive in URL fragments, are removed from history after hydration, and require an explicit button press. Opening a link does not change account preferences. Verification never enables email alerts. One-click unsubscribe is a POST endpoint for email providers.
+
+The address, verification, opt-in and suppression states remain separate. Unavailable providers have an explicit state with disabled send actions. Turning alerts off remains available during a provider outage. Queued means waiting for submission; accepted means provider acceptance; delivered means recipient server acceptance. No state claims inbox placement. Send failures preserve settings and show a recoverable message.
+
+Verification: `apps/api/src/notifications/email.service.spec.ts`, isolated PostgreSQL/Redis integration, and `tests/e2e/email.spec.ts` on desktop and mobile.
