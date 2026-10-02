@@ -9,7 +9,8 @@ RUN apk add --no-cache libc6-compat openssl curl
 FROM base AS builder
 COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/
-RUN npm ci
+# Embedded Redis is used by local/integration tests, not the deployed services.
+RUN REDISMS_DISABLE_POSTINSTALL=true npm ci
 
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
