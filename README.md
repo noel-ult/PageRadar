@@ -1,5 +1,10 @@
 # PageRadar
 
+<!-- documentation-navigation -->
+[Developer guide](docs/PROJECT_GUIDE.md) · [Source reference](docs/REFERENCE.md) · [Contributing](CONTRIBUTING.md)
+<!-- /documentation-navigation -->
+
+
 PageRadar watches important webpages and explains what changed, why it matters, and the previous and current values. This repository implements a reliable beta using its existing Next.js, NestJS/GraphQL, Prisma/PostgreSQL and BullMQ/Redis architecture.
 
 ## What works
