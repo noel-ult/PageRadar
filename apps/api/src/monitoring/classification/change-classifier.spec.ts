@@ -2,6 +2,7 @@ import { ChangeType } from "@prisma/client";
 import { ChangeClassifier } from "./change-classifier";
 import { SemanticAnalyzer } from "./semantic-analyzer";
 import { DiffResult } from "../diff/diff-engine";
+import { FetchFailure } from "../security/url-validator";
 
 describe("ChangeClassifier", () => {
   let classifier: ChangeClassifier;
@@ -152,5 +153,58 @@ describe("ChangeClassifier", () => {
       ChangeType.ELIGIBILITY_CHANGED,
     ]);
     expect(result[0].result.summary).toContain("18 days");
+  });
+
+  function changedPage(removed: number, added: number) {
+    const before = [
+      {
+        id: "main#1",
+        title: "Main",
+        content: Array.from(
+          { length: removed },
+          (_, i) => `Old story ${i}`,
+        ).join("\n"),
+      },
+    ];
+    const after = [
+      {
+        ...before[0],
+        content: Array.from({ length: added }, (_, i) => `New story ${i}`).join(
+          "\n",
+        ),
+      },
+    ];
+    return classifier.classifyMany(
+      before[0].content,
+      after[0].content,
+      before,
+      after,
+      "News Tracker",
+    );
+  }
+
+  it.each([
+    [50, 51],
+    [250, 250],
+    [0, 500],
+    [500, 0],
+  ])(
+    "analyzes %i removed and %i added lines within the increased limit",
+    async (removed, added) => {
+      const events = await changedPage(removed, added);
+      expect(events).toHaveLength(Math.max(removed, added));
+    },
+  );
+
+  it("rejects 501 combined changed lines before classifying any events", async () => {
+    const classify = jest.spyOn(classifier, "classify");
+    const result = changedPage(250, 251);
+    await expect(result).rejects.toBeInstanceOf(FetchFailure);
+    await expect(result).rejects.toMatchObject({
+      message:
+        "Too many changes to analyze safely; choose a specific page section.",
+      retryable: false,
+    });
+    expect(classify).not.toHaveBeenCalled();
   });
 });

@@ -7,6 +7,8 @@ import { diffLines } from "diff";
 import { DiffEngine } from "../diff/diff-engine";
 import { NormalizedSection } from "../normalization/content-normalizer";
 
+const MAX_CHANGED_LINES = 500;
+
 export interface ClassificationResult {
   isMeaningful: boolean;
   category: ChangeType;
@@ -34,7 +36,10 @@ export class ChangeClassifier {
   ) {
     const engine = new DiffEngine();
     const overall = engine.computeDiff(previous, current, before, after);
-    if (overall.addedLines.length + overall.removedLines.length > 100)
+    if (
+      overall.addedLines.length + overall.removedLines.length >
+      MAX_CHANGED_LINES
+    )
       throw new FetchFailure(
         "Too many changes to analyze safely; choose a specific page section.",
       );
