@@ -126,3 +126,7 @@ Integration tests use isolated temporary databases and ports 55432/56379; browse
 ## Scope after the beta
 
 JavaScript browser rendering, full-page PDF/file monitoring, signed user webhooks, account recovery, billing and high-scale capacity tuning remain future work. Pages requiring login or browser challenges produce an explicit failure and preserve their baseline. Ambiguous dates are shown as evidence without inventing a time interval.
+
+<!-- developer-handbook-20261028 -->
+[Developer guide](docs/PROJECT_GUIDE.md) · [Source reference](docs/REFERENCE.md) · [Verification and operations](docs/OPERATIONS.md)
+<!-- /developer-handbook-20261028 -->

@@ -1,7 +1,6 @@
 # PageRadar source reference
 
-
-Source reviewed: [`cca800122996`](https://github.com/noel-ult/PageRadar/commit/cca8001229967972ec7f9580ee75ac212bb7e2f0).
+Source reviewed: [`aff652d9bb4c`](https://github.com/noel-ult/PageRadar/commit/aff652d9bb4c08a1d86fa79afe43e17c34df3800).
 
 This reference records the checked-in source, scripts, configuration names, and route declarations. It is a navigation aid; service availability and successful test execution require separate verification.
 
@@ -184,9 +183,12 @@ Historical plans/reports describe their own revision; use current source when th
 - [AGENTS.md](../AGENTS.md)
 - [BACKEND_CONTRACT.md](../BACKEND_CONTRACT.md)
 - [CLAUDE.md](../CLAUDE.md)
+- [CONTRIBUTING.md](../CONTRIBUTING.md)
 - [DESIGN.md](../DESIGN.md)
 - [README.md](../README.md)
 - [UX-CONTRACT.md](../UX-CONTRACT.md)
+- [docs/PROJECT_GUIDE.md](../docs/PROJECT_GUIDE.md)
+- [docs/REFERENCE.md](../docs/REFERENCE.md)
 - [docs/email-notifications.md](../docs/email-notifications.md)
 
 ## Source and configuration map
